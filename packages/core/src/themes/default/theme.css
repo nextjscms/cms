@@ -1,0 +1,6 @@
+@import "tailwindcss";
+
+/* 
+  Custom CSS for the default theme.
+  We import tailwindcss here so that the theme is self-contained. 
+*/

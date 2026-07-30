@@ -1,0 +1,21 @@
+{
+  "name": "Bootstrap Theme Example",
+  "slug": "bootstrap",
+  "version": "1.0.0",
+  "author": "NextjsCMS",
+  "description": "A demonstration theme that uses CDN-injected Bootstrap CSS instead of Tailwind.",
+  "settingsSchema": [
+    {
+      "id": "siteName",
+      "label": "Site Name",
+      "type": "text",
+      "default": "Bootstrap CMS"
+    },
+    {
+      "id": "navbarType",
+      "label": "Navbar Style (dark or light)",
+      "type": "text",
+      "default": "dark"
+    }
+  ]
+}

@@ -1,0 +1,27 @@
+{
+  "name": "Default Theme",
+  "slug": "default",
+  "version": "1.0.0",
+  "author": "NextjsCMS",
+  "description": "The default clean, modern theme for NextjsCMS.",
+  "settingsSchema": [
+    {
+      "id": "siteName",
+      "label": "Site Name",
+      "type": "text",
+      "default": "NextjsCMS"
+    },
+    {
+      "id": "primaryColor",
+      "label": "Primary Brand Color",
+      "type": "color",
+      "default": "#2563eb"
+    },
+    {
+      "id": "showFooterCredits",
+      "label": "Show Footer Credits",
+      "type": "boolean",
+      "default": true
+    }
+  ]
+}
