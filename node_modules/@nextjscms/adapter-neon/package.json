@@ -1,0 +1,9 @@
+{
+  "name": "@nextjscms/adapter-neon",
+  "version": "0.1.0",
+  "main": "index.ts",
+  "dependencies": {
+    "@neondatabase/serverless": "^1.1.0",
+    "drizzle-orm": "*"
+  }
+}
