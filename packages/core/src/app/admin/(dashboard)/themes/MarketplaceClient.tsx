@@ -94,7 +94,7 @@ export default function MarketplaceClient({ localThemes, activeThemeSlug }: Mark
       setLoading(true);
       setError('');
       try {
-        const apiUrl = process.env.NEXT_PUBLIC_MARKETPLACE_API_URL || 'http://localhost:3001';
+        const apiUrl = process.env.NEXT_PUBLIC_MARKETPLACE_API_URL || 'https://nextjscms-api.vercel.app';
         const url = `${apiUrl}/api/themes${debouncedQuery ? `?q=${encodeURIComponent(debouncedQuery)}` : ''}`;
         const res = await fetch(url);
         if (!res.ok) throw new Error('Failed to fetch marketplace themes');

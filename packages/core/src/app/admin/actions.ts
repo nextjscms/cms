@@ -29,7 +29,7 @@ export async function activateTheme(formData: FormData) {
 }
 
 export async function installTheme(slug: string, downloadUrl: string, version?: string) {
-  const apiUrl = process.env.NEXT_PUBLIC_MARKETPLACE_API_URL || 'http://localhost:3001';
+  const apiUrl = process.env.NEXT_PUBLIC_MARKETPLACE_API_URL || 'https://nextjscms-api.vercel.app';
   
   // Call the Central API Proxy to securely resolve and proxy the tarball
   const proxyUrl = `${apiUrl}/api/themes/download?url=${encodeURIComponent(downloadUrl)}&version=${version || ''}`;
