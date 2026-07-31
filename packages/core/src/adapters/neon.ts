@@ -25,21 +25,25 @@ export class NeonAdapter {
     const sql = neon(dbUrl);
     const db = drizzle(sql);
     const fs = (await import('fs')).default;
-    const migrationFile = path.join(process.cwd(), 'drizzle', '0000_many_the_santerians.sql');
-    if (!fs.existsSync(migrationFile)) return;
-
-    // Check if tables exist to avoid Drizzle migrator silent failures
-    const checkTable = await (sql as any).query(`SELECT tablename FROM pg_tables WHERE schemaname='public' AND tablename='users'`);
+    const migrationsFolder = path.join(process.cwd(), 'drizzle');
     
-    if (checkTable.length === 0) {
-      const content = fs.readFileSync(migrationFile, 'utf8');
-      const queries = content.split('--> statement-breakpoint');
-      
-      for (const query of queries) {
-        if (!query.trim()) continue;
-        await (sql as any).query(query.trim());
-      }
-      
+    if (!fs.existsSync(migrationsFolder)) {
+      console.warn("Migrations folder not found at:", migrationsFolder);
+      return;
+    }
+
+    const files = fs.readdirSync(migrationsFolder).filter(f => f.endsWith('.sql')).sort();
+    if (files.length === 0) return;
+
+    // Check if migrations table exists
+    const checkTable = await (sql as any).query(`SELECT tablename FROM pg_tables WHERE schemaname='public' AND tablename='__drizzle_migrations'`);
+    
+    let appliedMigrations: string[] = [];
+    if (checkTable.length > 0) {
+      const res = await (sql as any).query(`SELECT hash FROM "drizzle"."__drizzle_migrations"`);
+      appliedMigrations = res.map((r: any) => r.hash);
+    } else {
+      // First run, setup drizzle schema
       await (sql as any).query(`CREATE SCHEMA IF NOT EXISTS "drizzle"`);
       await (sql as any).query(`
         CREATE TABLE IF NOT EXISTS "drizzle"."__drizzle_migrations" (
@@ -48,14 +52,32 @@ export class NeonAdapter {
           created_at bigint
         )
       `);
-      // Ignore conflict if it was already inserted by a failed run
+    }
+
+    for (const file of files) {
+      // Simple hash to track if applied (just use filename as hash for simplicity in this manual migrator)
+      const migrationHash = file;
+      if (appliedMigrations.includes(migrationHash)) continue;
+
+      const migrationFile = path.join(migrationsFolder, file);
+      const content = fs.readFileSync(migrationFile, 'utf8');
+      const queries = content.split('--> statement-breakpoint');
+      
+      for (const query of queries) {
+        if (!query.trim()) continue;
+        try {
+          await (sql as any).query(query.trim());
+        } catch (e: any) {
+          console.error(`Migration error in ${file}:`, e.message);
+          throw new Error(`Failed to apply migration ${file}: ${e.message}`);
+        }
+      }
+      
+      // Record successful migration
       await (sql as any).query(`
         INSERT INTO "drizzle"."__drizzle_migrations" (hash, created_at)
-        SELECT '053e0728298665aeddc3e35e192b23ee74f929b23567b705452712523830a2f2', extract(epoch from now()) * 1000
-        WHERE NOT EXISTS (
-          SELECT id FROM "drizzle"."__drizzle_migrations" WHERE hash = '053e0728298665aeddc3e35e192b23ee74f929b23567b705452712523830a2f2'
-        )
-      `);
+        VALUES ($1, extract(epoch from now()) * 1000)
+      `, [migrationHash]);
     }
   }
 
