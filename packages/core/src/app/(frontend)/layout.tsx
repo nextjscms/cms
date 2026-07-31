@@ -1,3 +1,4 @@
+import { redirect } from 'next/navigation';
 import { getDb } from '@/db';
 import { settings, menus, menuItems } from '@/db/schema';
 import { eq } from 'drizzle-orm';
@@ -11,8 +12,17 @@ export default async function FrontendLayout({ children }: { children: React.Rea
   const db = getDb();
 
   // 1. Fetch active theme from settings
-  const [activeThemeSetting] = await db.select().from(settings).where(eq(settings.key, 'activeTheme'));
-  const activeTheme = activeThemeSetting?.value || 'default';
+  let activeTheme = 'default';
+  try {
+    const [activeThemeSetting] = await db.select().from(settings).where(eq(settings.key, 'activeTheme'));
+    activeTheme = activeThemeSetting?.value || 'default';
+  } catch (error: any) {
+    if (error.message?.includes('relation "settings" does not exist') || error.message?.includes('does not exist')) {
+      console.error("Database tables missing on frontend. Redirecting to setup.");
+      redirect('/setup');
+    }
+    throw error;
+  }
 
   // 2. Load Theme CSS
   await loadThemeCSS(activeTheme);
