@@ -48,7 +48,7 @@ export default function MenuEditorClient({ allMenus }: { allMenus: Record<string
     setItems(newItems);
   };
 
-  const handleChange = (index: number, field: keyof MenuItem, value: string) => {
+  const handleChange = (index: number, field: 'label' | 'url', value: string) => {
     const newItems = [...items];
     newItems[index][field] = value;
     setItems(newItems);
