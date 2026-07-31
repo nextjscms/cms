@@ -5,10 +5,8 @@ const nextConfig: NextConfig = {
   eslint: {
     ignoreDuringBuilds: true,
   },
-  experimental: {
-    outputFileTracingIncludes: {
-      '/**': ['./drizzle/**/*'],
-    },
+  outputFileTracingIncludes: {
+    '/**': ['./drizzle/**/*'],
   },
 };
 
