@@ -1,0 +1,15 @@
+{
+  "name": "@nextjscms/theme-bootstrap",
+  "version": "1.0.2",
+  "description": "A classic Bootstrap inspired theme for NextjsCMS. https://upload.wikimedia.org/wikipedia/commons/thumb/b/b2/Bootstrap_logo.svg/256px-Bootstrap_logo.svg.png",
+  "main": "theme.json",
+  "publishConfig": {
+    "registry": "https://npm.pkg.github.com",
+    "access": "public"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/nextjscms/cms.git",
+    "directory": "packages/core/src/themes/bootstrap"
+  }
+}

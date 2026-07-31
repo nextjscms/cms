@@ -9,14 +9,13 @@ type LayoutProps = {
 
 export default function Layout({ children, settings = {}, menus = {} }: LayoutProps) {
   const siteName = settings.siteName || "NextjsCMS";
-  const primaryColor = settings.primaryColor || "#2563eb";
   const showFooterCredits = settings.showFooterCredits === 'true' || settings.showFooterCredits === undefined;
 
   return (
-    <div className="min-h-screen flex flex-col bg-white">
-      <header className="bg-white border-b border-neutral-100">
+    <div className="min-h-screen flex flex-col bg-background text-foreground">
+      <header className="bg-background border-b border-border">
         <div className="max-w-5xl mx-auto px-6 py-6 flex items-center justify-between">
-          <h1 className="text-2xl font-bold tracking-tight" style={{ color: primaryColor }}>
+          <h1 className="text-2xl font-bold tracking-tight text-primary" data-theme-editable="siteName">
             {siteName}
           </h1>
           <nav className="space-x-6 text-sm font-medium">
@@ -37,7 +36,7 @@ export default function Layout({ children, settings = {}, menus = {} }: LayoutPr
         {children}
       </main>
 
-      <footer className="bg-neutral-50 border-t border-neutral-200 mt-20">
+      <footer className="bg-secondary border-t border-border mt-20">
         <div className="max-w-5xl mx-auto px-6 py-12 text-center flex flex-col items-center">
           {menus.footer && menus.footer.length > 0 && (
             <div className="flex gap-6 mb-6">
@@ -51,11 +50,13 @@ export default function Layout({ children, settings = {}, menus = {} }: LayoutPr
           <p className="text-neutral-500 text-sm mb-4">
             &copy; {new Date().getFullYear()} {siteName}.
           </p>
-          {showFooterCredits && (
-            <p className="text-xs text-neutral-400 font-medium tracking-wide uppercase">
-              Powered by Next.js & Neon Serverless Postgres
-            </p>
-          )}
+          <p 
+            className="text-xs text-neutral-400 font-medium tracking-wide uppercase"
+            data-theme-if="showFooterCredits"
+            style={{ display: showFooterCredits ? '' : 'none' }}
+          >
+            Powered by Next.js & Neon Serverless Postgres
+          </p>
         </div>
       </footer>
     </div>

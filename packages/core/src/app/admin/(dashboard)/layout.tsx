@@ -20,7 +20,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
   const customPostTypes = await db.select().from(postTypes);
   
   return (
-    <div className="flex min-h-screen bg-neutral-100 text-neutral-900">
+    <div className="flex h-screen overflow-hidden bg-neutral-100 text-neutral-900">
       {/* Sidebar */}
       <aside className="w-64 bg-slate-900 text-slate-300 flex flex-col">
         <div className="h-16 flex items-center px-6 border-b border-slate-800">

@@ -12,16 +12,45 @@
       "default": "NextjsCMS"
     },
     {
+      "id": "backgroundColor",
+      "label": "Background Color",
+      "type": "color",
+      "default": "#ffffff",
+      "category": "Colors"
+    },
+    {
+      "id": "surfaceColor",
+      "label": "Surface / Card Background",
+      "type": "color",
+      "default": "#f8fafc",
+      "category": "Colors"
+    },
+    {
+      "id": "textPrimary",
+      "label": "Primary Text",
+      "type": "color",
+      "default": "#0f172a",
+      "category": "Colors"
+    },
+    {
       "id": "primaryColor",
       "label": "Primary Brand Color",
       "type": "color",
-      "default": "#2563eb"
+      "default": "#2563eb",
+      "category": "Colors"
+    },
+    {
+      "id": "secondaryColor",
+      "label": "Secondary Color",
+      "type": "color",
+      "default": "#64748b",
+      "category": "Colors"
     },
     {
       "id": "showFooterCredits",
       "label": "Show Footer Credits",
       "type": "boolean",
-      "default": true
+      "default": false
     }
   ]
 }

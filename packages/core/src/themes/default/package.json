@@ -1,0 +1,15 @@
+{
+  "name": "@nextjscms/theme-default",
+  "version": "1.0.1",
+  "description": "The default clean, modern theme for NextjsCMS.",
+  "main": "theme.json",
+  "publishConfig": {
+    "registry": "https://npm.pkg.github.com",
+    "access": "public"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/nextjscms/cms.git",
+    "directory": "packages/core/src/themes/default"
+  }
+}

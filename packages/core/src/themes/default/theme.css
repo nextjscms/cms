@@ -4,3 +4,11 @@
   Custom CSS for the default theme.
   We import tailwindcss here so that the theme is self-contained. 
 */
+
+@theme inline {
+  --color-background: var(--backgroundColor, #ffffff);
+  --color-foreground: var(--textPrimary, #0f172a);
+  --color-primary: var(--primaryColor, #2563eb);
+  --color-secondary: var(--secondaryColor, #64748b);
+  --color-border: #e2e8f0;
+}

@@ -4,6 +4,10 @@ import { getDb } from '@/db';
 import { settings } from '@/db/schema';
 import { eq } from 'drizzle-orm';
 import { revalidatePath } from 'next/cache';
+import fs from 'fs';
+import path from 'path';
+import * as tar from 'tar';
+import { Readable } from 'stream';
 
 export async function activateTheme(formData: FormData) {
   const slug = formData.get('themeSlug') as string;
@@ -22,4 +26,44 @@ export async function activateTheme(formData: FormData) {
     revalidatePath('/');
     revalidatePath('/admin/themes');
   }
+}
+
+export async function installTheme(slug: string, downloadUrl: string, version?: string) {
+  const apiUrl = process.env.NEXT_PUBLIC_MARKETPLACE_API_URL || 'http://localhost:3001';
+  
+  // Call the Central API Proxy to securely resolve and proxy the tarball
+  const proxyUrl = `${apiUrl}/api/themes/download?url=${encodeURIComponent(downloadUrl)}&version=${version || ''}`;
+  console.log(`Downloading theme via proxy: ${proxyUrl}`);
+  
+  const finalResponse = await fetch(proxyUrl);
+
+  if (!finalResponse.ok) {
+    throw new Error(`Failed to download theme tarball from API (${finalResponse.status}): ${finalResponse.statusText}`);
+  }
+
+  // Create the target directory
+  const themesDir = path.join(process.cwd(), 'src/themes', slug);
+  if (!fs.existsSync(themesDir)) {
+    fs.mkdirSync(themesDir, { recursive: true });
+  }
+
+  if (finalResponse.body) {
+    const stream = Readable.fromWeb(finalResponse.body as any);
+    
+    // Pipe the download directly into tar extraction
+    await new Promise((resolve, reject) => {
+      stream
+        .pipe(tar.x({
+          cwd: themesDir,
+          strip: 1, // NPM packs everything inside a `package/` folder, strip it
+        }))
+        .on('finish', resolve)
+        .on('error', reject);
+    });
+
+    revalidatePath('/admin/themes');
+    return { success: true };
+  }
+  
+  throw new Error('Empty response body');
 }

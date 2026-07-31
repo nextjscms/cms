@@ -28,5 +28,5 @@ export interface DatabaseAdapter {
   /**
    * Get the underlying Drizzle ORM instance for the application to use.
    */
-  getDb(dbUrl: string): any;
+  getDb(dbUrl: string): import('drizzle-orm/pg-core').PgDatabase<any, any, any>;
 }
