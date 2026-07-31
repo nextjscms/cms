@@ -25,7 +25,7 @@ export const authOptions: NextAuthConfig = {
       async authorize(credentials) {
         if (!credentials?.email || !credentials?.password) return null;
         
-        const { dbAdapter } = require('@/db');
+        const { dbAdapter } = await import('@/db');
         const user = await dbAdapter.getUserByEmail(credentials.email as string);
         
         if (!user) return null;

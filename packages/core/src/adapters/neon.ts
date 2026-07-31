@@ -24,7 +24,7 @@ export class NeonAdapter {
   async migrate(dbUrl: string): Promise<void> {
     const sql = neon(dbUrl);
     const db = drizzle(sql);
-    const fs = require('fs');
+    const fs = (await import('fs')).default;
     const migrationFile = path.join(process.cwd(), 'drizzle', '0000_many_the_santerians.sql');
     if (!fs.existsSync(migrationFile)) return;
 

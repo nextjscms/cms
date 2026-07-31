@@ -4,16 +4,13 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "next build",
+    "build": "next build --webpack",
     "start": "next start",
     "lint": "eslint"
   },
   "dependencies": {
     "@base-ui/react": "^1.6.0",
     "@neondatabase/serverless": "^1.1.0",
-    "@nextjscms/adapter-local": "^0.1.0",
-    "@nextjscms/adapter-neon": "^0.1.0",
-    "@nextjscms/adapter-s3": "^0.1.0",
     "@tiptap/pm": "^3.29.2",
     "@tiptap/react": "^3.29.2",
     "@tiptap/starter-kit": "^3.29.2",

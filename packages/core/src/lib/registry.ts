@@ -1,7 +1,7 @@
 import { DatabaseAdapter } from '../adapters/database';
 import { StorageAdapter } from '../adapters/storage';
-import { NeonAdapter } from '@nextjscms/adapter-neon';
-import { LocalStorageAdapter } from '@nextjscms/adapter-local';
+import { NeonAdapter } from '../adapters/neon';
+import { LocalStorageAdapter } from '../adapters/local';
 
 /**
  * The core factory that dynamically resolves the correct adapter based on the environment configuration.
