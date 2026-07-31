@@ -16,8 +16,6 @@ export const metadata: Metadata = {
   description: "A fast, modern CMS",
 };
 
-export const dynamic = 'force-dynamic';
-
 export default function RootLayout({
   children,
 }: Readonly<{
