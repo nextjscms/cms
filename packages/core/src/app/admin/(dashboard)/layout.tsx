@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import { redirect } from 'next/navigation';
 import * as LucideIcons from 'lucide-react';
 const { FileText, Home, Image, Settings, Users, LayoutTemplate, Puzzle, Tags, FolderTree, Database, LogOut } = LucideIcons;
 
@@ -17,7 +18,17 @@ import { postTypes } from '@/db/schema';
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {
   const isAdmin = await hasPermission('admin');
   const db = getDb();
-  const customPostTypes = await db.select().from(postTypes);
+  let customPostTypes = [];
+  try {
+    customPostTypes = await db.select().from(postTypes);
+  } catch (error: any) {
+    // If the tables don't exist (e.g. user manually set DATABASE_URL but didn't run migrations)
+    if (error.message?.includes('relation "post_types" does not exist') || error.message?.includes('does not exist')) {
+      console.error("Database tables missing. Redirecting to setup.");
+      redirect('/setup');
+    }
+    throw error;
+  }
   
   return (
     <div className="flex h-screen overflow-hidden bg-neutral-100 text-neutral-900">
