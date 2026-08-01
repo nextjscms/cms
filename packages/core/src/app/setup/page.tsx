@@ -24,6 +24,11 @@ function SetupWizard() {
   const [installProgress, setInstallProgress] = useState<'idle' | 'saving' | 'migrating' | 'seeding' | 'done'>('idle');
   const [envContent, setEnvContent] = useState('');
   const [vercelDetails, setVercelDetails] = useState<{ isVercel: boolean; vercelOwner: string | null; vercelSlug: string | null } | null>(null);
+  const [vercelProjectUrl, setVercelProjectUrl] = useState('');
+
+  useEffect(() => {
+    getEnvironmentDetails().then(setVercelDetails).catch(() => {});
+  }, []);
   
   const [selectedProvider, setSelectedProvider] = useState<'neon' | 'supabase' | 'vercel' | 'manual' | null>(null);
 
@@ -84,6 +89,10 @@ function SetupWizard() {
     
     const formData = new FormData(e.currentTarget);
     const url = formData.get('databaseUrl') as string;
+    const vUrl = formData.get('vercelProjectUrl') as string;
+    if (vUrl) {
+      setVercelProjectUrl(vUrl);
+    }
     
     // Step 1: Save Configuration
     const saveRes = await saveSetupConfig(url);
@@ -127,8 +136,6 @@ function SetupWizard() {
         envString = finalEnv;
         setEnvContent(finalEnv);
       }
-      const vDetails = await getEnvironmentDetails();
-      setVercelDetails(vDetails);
     } catch (e) {
       // Ignore network errors caused by dev server restart
     }
@@ -286,6 +293,15 @@ function SetupWizard() {
                   <Label htmlFor="password">Admin Password</Label>
                   <Input id="password" name="password" type="password" required />
                 </div>
+                
+                {vercelDetails?.isVercel && (
+                  <div className="space-y-2 pt-2 border-t">
+                    <Label htmlFor="vercelProjectUrl">Vercel Project URL (Optional)</Label>
+                    <Input id="vercelProjectUrl" name="vercelProjectUrl" placeholder="https://vercel.com/team/project" />
+                    <p className="text-xs text-slate-500">Paste your Vercel project URL to generate a direct link to your Environment Variables settings.</p>
+                  </div>
+                )}
+
                 {error && <p className="text-sm text-red-500 font-medium">{error}</p>}
               </CardContent>
               <CardFooter className="flex flex-col space-y-2">
@@ -369,10 +385,17 @@ function SetupWizard() {
                 {vercelDetails?.isVercel && (
                   <Button 
                     className="flex-1 bg-black text-white hover:bg-neutral-800"
-                    onClick={() => window.open(`https://vercel.com/dashboard`, '_blank')}
+                    onClick={() => {
+                      if (vercelProjectUrl) {
+                        const baseUrl = vercelProjectUrl.trim().replace(/\/$/, '');
+                        window.open(`${baseUrl}/settings/environment-variables`, '_blank');
+                      } else {
+                        window.open(`https://vercel.com/dashboard`, '_blank');
+                      }
+                    }}
                   >
                     <ExternalLink className="w-4 h-4 mr-2" />
-                    Open Vercel Dashboard
+                    Open Vercel {vercelProjectUrl ? 'Settings' : 'Dashboard'}
                   </Button>
                 )}
               </div>
