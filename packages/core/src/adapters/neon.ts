@@ -68,8 +68,12 @@ export class NeonAdapter {
         try {
           await (sql as any).query(query.trim());
         } catch (e: any) {
-          console.error(`Migration error in ${file}:`, e.message);
-          throw new Error(`Failed to apply migration ${file}: ${e.message}`);
+          if (e.message && e.message.includes('already exists')) {
+            console.warn(`Skipping existing relation in ${file}:`, e.message);
+          } else {
+            console.error(`Migration error in ${file}:`, e.message);
+            throw new Error(`Failed to apply migration ${file}: ${e.message}`);
+          }
         }
       }
       
