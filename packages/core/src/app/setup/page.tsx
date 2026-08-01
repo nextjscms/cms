@@ -363,13 +363,13 @@ function SetupWizard() {
                   Download .env
                 </Button>
                 
-                {vercelDetails?.isVercel && vercelDetails?.vercelOwner && vercelDetails?.vercelSlug && (
+                {vercelDetails?.isVercel && (
                   <Button 
                     className="flex-1 bg-black text-white hover:bg-neutral-800"
-                    onClick={() => window.open(`https://vercel.com/${vercelDetails.vercelOwner}/${vercelDetails.vercelSlug}/settings/environment-variables`, '_blank')}
+                    onClick={() => window.open(`https://vercel.com/dashboard`, '_blank')}
                   >
                     <ExternalLink className="w-4 h-4 mr-2" />
-                    Open Vercel Settings
+                    Open Vercel Dashboard
                   </Button>
                 )}
               </div>
