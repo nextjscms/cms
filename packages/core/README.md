@@ -2,7 +2,7 @@
 
 A modern, fast, and highly customizable Headless/Integrated CMS built with Next.js 15, React, and Drizzle ORM.
 
-[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Fnextjscms%2Fcms&env=DATABASE_URL&root-directory=packages%2Fcore)
+[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Fnextjscms%2Fcms&env=DATABASE_URL,AUTH_SECRET&envDescription=Enter%20your%20Postgres%20database%20URL%20and%20a%20random%20string%20for%20AUTH_SECRET&root-directory=packages%2Fcore)
 
 ## Features
 
