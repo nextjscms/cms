@@ -381,9 +381,10 @@ function SetupWizard() {
                 <p className="font-semibold mb-2">Next Steps:</p>
                 <ol className="list-decimal list-inside space-y-1">
                   <li>Download the .env file or copy the variables above.</li>
-                  <li>Add them to your project's Environment Variables.</li>
-                  <li>Deploy or Redeploy your project.</li>
-                  <li>Click the button below to access your admin panel!</li>
+                  <li>Go back to your Vercel Project Dashboard tab (e.g., <i>vercel.com/team/project</i>).</li>
+                  <li>Navigate to <b>Settings &gt; Environment Variables</b> and add them.</li>
+                  <li>Redeploy your project in Vercel so the variables take effect.</li>
+                  <li>Once the redeploy is complete, click the button below to access your admin panel!</li>
                 </ol>
               </div>
 
