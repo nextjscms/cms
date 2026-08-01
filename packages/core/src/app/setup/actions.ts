@@ -55,11 +55,27 @@ export async function seedSetupAdmin(dbUrl: string, formData: FormData) {
   }
 }
 
+export async function getEnvironmentDetails() {
+  return {
+    isVercel: !!process.env.VERCEL,
+    vercelOwner: process.env.VERCEL_GIT_REPO_OWNER || null,
+    vercelSlug: process.env.VERCEL_GIT_REPO_SLUG || null,
+  };
+}
+
 export async function finalizeSetup(dbUrl: string, authSecret: string) {
   try {
-    const envPath = path.join(process.cwd(), '.env.local');
-    fs.appendFileSync(envPath, `\nDATABASE_URL="${dbUrl}"\nAUTH_SECRET="${authSecret}"\n`);
-    return { success: true };
+    const envFileContent = `DATABASE_URL="${dbUrl}"\nAUTH_SECRET="${authSecret}"\n`;
+    
+    // Attempt local write for local dev, but don't fail if it doesn't work (like on Vercel)
+    try {
+      const envPath = path.join(process.cwd(), '.env.local');
+      fs.appendFileSync(envPath, `\n${envFileContent}`);
+    } catch (e) {
+      // Ignored
+    }
+
+    return { success: true, envFileContent };
   } catch (error: any) {
     return { success: false, error: error.message };
   }

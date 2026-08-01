@@ -5,10 +5,10 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
-import { testDatabaseConnection, saveSetupConfig, runSetupMigrations, seedSetupAdmin, finalizeSetup } from './actions';
+import { testDatabaseConnection, saveSetupConfig, runSetupMigrations, seedSetupAdmin, finalizeSetup, getEnvironmentDetails } from './actions';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Suspense, useEffect } from 'react';
-import { Database, Link as LinkIcon, Loader2, CheckCircle2, Circle } from 'lucide-react';
+import { Database, Link as LinkIcon, Loader2, CheckCircle2, Circle, Download, ExternalLink } from 'lucide-react';
 
 function SetupWizard() {
   const router = useRouter();
@@ -22,6 +22,8 @@ function SetupWizard() {
   const [error, setError] = useState<string | null>(null);
   const [dbUrl, setDbUrl] = useState(initialDbUrl);
   const [installProgress, setInstallProgress] = useState<'idle' | 'saving' | 'migrating' | 'seeding' | 'done'>('idle');
+  const [envContent, setEnvContent] = useState('');
+  const [vercelDetails, setVercelDetails] = useState<{ isVercel: boolean; vercelOwner: string | null; vercelSlug: string | null } | null>(null);
   
   const [selectedProvider, setSelectedProvider] = useState<'neon' | 'supabase' | 'vercel' | 'manual' | null>(null);
 
@@ -113,18 +115,38 @@ function SetupWizard() {
       return;
     }
 
-    // Done! Write to .env.local (which might restart the server and kill this request)
+    // Done! Show Step 3
     setInstallProgress('done');
+    let envString = '';
     try {
-      await finalizeSetup(url, authSecret);
+      const finalRes = await finalizeSetup(url, authSecret);
+      if (finalRes.success && finalRes.envFileContent) {
+        envString = finalRes.envFileContent;
+        setEnvContent(finalRes.envFileContent);
+      }
+      const vDetails = await getEnvironmentDetails();
+      setVercelDetails(vDetails);
     } catch (e) {
       // Ignore network errors caused by dev server restart
     }
     
     setTimeout(() => {
-      window.location.href = '/admin';
+      setStep(3);
+      window.history.pushState(null, '', '?step=3');
     }, 1500);
   }
+
+  const handleDownloadEnv = () => {
+    const blob = new Blob([envContent], { type: 'text/plain' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = '.env';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  };
 
   return (
     <div className="min-h-screen bg-neutral-100 flex items-center justify-center p-4">
@@ -309,6 +331,68 @@ function SetupWizard() {
                 </div>
               )}
             </CardContent>
+          </Card>
+        )}
+
+        {step === 3 && (
+          <Card className="w-full">
+            <CardHeader>
+              <div className="flex items-center gap-3 mb-2">
+                <CheckCircle2 className="w-8 h-8 text-green-500" />
+                <CardTitle className="text-2xl">Database Configured!</CardTitle>
+              </div>
+              <CardDescription className="text-base">
+                Your database is set up and the admin account has been created. 
+                Now, you must add these environment variables to your deployment to secure your site.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              
+              <div className="bg-slate-900 rounded-lg p-4 relative overflow-hidden">
+                <div className="absolute top-0 right-0 p-2 bg-slate-800/50 rounded-bl-lg text-xs text-slate-400 font-mono">
+                  .env
+                </div>
+                <pre className="text-emerald-400 text-sm font-mono overflow-x-auto whitespace-pre-wrap break-all mt-4">
+                  {envContent}
+                </pre>
+              </div>
+
+              <div className="flex flex-col sm:flex-row gap-3">
+                <Button onClick={handleDownloadEnv} className="flex-1" variant="outline">
+                  <Download className="w-4 h-4 mr-2" />
+                  Download .env
+                </Button>
+                
+                {vercelDetails?.isVercel && vercelDetails?.vercelOwner && vercelDetails?.vercelSlug && (
+                  <Button 
+                    className="flex-1 bg-black text-white hover:bg-neutral-800"
+                    onClick={() => window.open(`https://vercel.com/${vercelDetails.vercelOwner}/${vercelDetails.vercelSlug}/settings/environment-variables`, '_blank')}
+                  >
+                    <ExternalLink className="w-4 h-4 mr-2" />
+                    Open Vercel Settings
+                  </Button>
+                )}
+              </div>
+
+              <div className="bg-blue-50 border border-blue-200 p-4 rounded-lg text-sm text-blue-900">
+                <p className="font-semibold mb-2">Next Steps:</p>
+                <ol className="list-decimal list-inside space-y-1">
+                  <li>Download the .env file or copy the variables above.</li>
+                  <li>Add them to your project's Environment Variables.</li>
+                  <li>Deploy or Redeploy your project.</li>
+                  <li>Click the button below to access your admin panel!</li>
+                </ol>
+              </div>
+
+            </CardContent>
+            <CardFooter>
+              <Button 
+                className="w-full text-lg h-12" 
+                onClick={() => window.location.href = '/admin'}
+              >
+                I have added the variables & Redeployed!
+              </Button>
+            </CardFooter>
           </Card>
         )}
       </div>

@@ -8,6 +8,8 @@ import fs from 'fs';
 import path from 'path';
 import "../frontend.css";
 
+export const dynamic = 'force-dynamic';
+
 export default async function FrontendLayout({ children }: { children: React.ReactNode }) {
   const db = getDb();
 
