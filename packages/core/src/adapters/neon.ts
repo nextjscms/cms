@@ -98,6 +98,22 @@ export class NeonAdapter {
       VALUES ('siteName', ${data.siteName}, NOW())
       ON CONFLICT ("key") DO UPDATE SET "value" = ${data.siteName}, "updated_at" = NOW()
     `);
+
+    let repoUrl = null;
+    if (process.env.VERCEL_GIT_PROVIDER === 'github' && process.env.VERCEL_GIT_REPO_OWNER && process.env.VERCEL_GIT_REPO_SLUG) {
+      repoUrl = `https://github.com/${process.env.VERCEL_GIT_REPO_OWNER}/${process.env.VERCEL_GIT_REPO_SLUG}`;
+    } else if (process.env.VERCEL_GIT_REPO_OWNER && process.env.VERCEL_GIT_REPO_SLUG) {
+      // Fallback for gitlab/bitbucket if ever supported, though urls might differ. Default to github format or generic.
+      repoUrl = `https://${process.env.VERCEL_GIT_PROVIDER || 'github'}.com/${process.env.VERCEL_GIT_REPO_OWNER}/${process.env.VERCEL_GIT_REPO_SLUG}`;
+    }
+
+    if (repoUrl) {
+      await db.execute(dSql`
+        INSERT INTO "settings" ("key", "value", "updated_at") 
+        VALUES ('gitRepositoryUrl', ${repoUrl}, NOW())
+        ON CONFLICT ("key") DO UPDATE SET "value" = ${repoUrl}, "updated_at" = NOW()
+      `);
+    }
   }
 
   async getUserByEmail(email: string): Promise<any | null> {
