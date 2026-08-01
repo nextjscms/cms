@@ -1,7 +1,10 @@
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 
-import { auth } from '@/auth'
+import NextAuth from "next-auth"
+import { authConfig } from "./auth.config"
+
+export const { auth } = NextAuth(authConfig)
 
 export default auth((req) => {
   // For the MVP, we determine if the CMS is installed based on the presence of a database connection string.

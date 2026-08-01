@@ -1,20 +1,9 @@
-import NextAuth, { DefaultSession, NextAuthConfig } from "next-auth";
+import NextAuth from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
+import { authConfig } from "./auth.config";
 
-// Extend the built-in session types
-declare module "next-auth" {
-  interface Session {
-    user: {
-      id: string;
-      role: string;
-    } & DefaultSession["user"];
-  }
-  interface User {
-    role?: string;
-  }
-}
-
-export const authOptions: NextAuthConfig = {
+export const { handlers, auth, signIn, signOut } = NextAuth({
+  ...authConfig,
   providers: [
     CredentialsProvider({
       name: "Credentials",
@@ -50,30 +39,4 @@ export const authOptions: NextAuthConfig = {
       }
     })
   ],
-  callbacks: {
-    async jwt({ token, user }) {
-      // Pass role from user object to JWT token during sign-in
-      if (user) {
-        token.role = user.role;
-        token.id = user.id;
-      }
-      return token;
-    },
-    async session({ session, token }) {
-      // Pass role from JWT to session so client/server can access it
-      if (token && session.user) {
-        session.user.role = token.role as string;
-        session.user.id = token.id as string;
-      }
-      return session;
-    }
-  },
-  pages: {
-    signIn: '/admin/login',
-  },
-  session: {
-    strategy: "jwt"
-  }
-};
-
-export const { handlers, auth, signIn, signOut } = NextAuth(authOptions);
+});
