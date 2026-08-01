@@ -1,6 +1,7 @@
 import NextAuth from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
 import { authConfig } from "./auth.config";
+import { dbAdapter } from "@/db";
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
   ...authConfig,
@@ -14,10 +15,6 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       async authorize(credentials) {
         if (!credentials?.email || !credentials?.password) return null;
         
-        // Hide the import from Turbopack static analysis by using a dynamic path or eval
-        // This avoids the 'expected chunkable module for async reference' compiler panic in Next 16.
-        const dbPath = '@/db';
-        const { dbAdapter } = await import(/* webpackIgnore: true */ dbPath);
         const user = await dbAdapter.getUserByEmail(credentials.email as string);
         
         if (!user) return null;
