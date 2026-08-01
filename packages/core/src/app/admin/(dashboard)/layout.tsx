@@ -12,6 +12,8 @@ function DynamicIcon({ name, fallback = 'Database', className }: { name?: string
 import { hasPermission } from '@/lib/auth-utils';
 import { signOut } from '@/auth';
 
+export const dynamic = 'force-dynamic';
+
 import { getDb } from '@/db';
 import { postTypes } from '@/db/schema';
 
