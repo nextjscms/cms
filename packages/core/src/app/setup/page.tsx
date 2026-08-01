@@ -49,7 +49,7 @@ function SetupWizard() {
       return;
     }
     
-    const result = await testDatabaseConnection(url);
+    const result = await testDatabaseConnection(url, selectedProvider || 'manual');
     
     if (result.success) {
       setDbUrl(url);
@@ -106,7 +106,7 @@ function SetupWizard() {
 
     // Step 2: Run Database Migrations
     setInstallProgress('migrating');
-    const migRes = await runSetupMigrations(url);
+    const migRes = await runSetupMigrations(url, selectedProvider || 'manual');
     if (!migRes.success) {
       setError(migRes.error || 'Failed to run database migrations.');
       setInstallProgress('idle');
@@ -116,7 +116,7 @@ function SetupWizard() {
 
     // Step 3: Seed Admin User
     setInstallProgress('seeding');
-    const seedRes = await seedSetupAdmin(url, formData);
+    const seedRes = await seedSetupAdmin(url, selectedProvider || 'manual', formData);
     if (!seedRes.success) {
       setError(seedRes.error || 'Failed to seed admin user.');
       setInstallProgress('idle');
@@ -128,7 +128,7 @@ function SetupWizard() {
     setInstallProgress('done');
     let envString = '';
     try {
-      const finalRes = await finalizeSetup(url, authSecret);
+      const finalRes = await finalizeSetup(url, selectedProvider || 'manual', authSecret);
       if (finalRes.success && finalRes.envFileContent) {
         // Automatically grab the deployment URL from the browser and append NEXTAUTH_URL
         const originUrl = typeof window !== 'undefined' ? window.location.origin : '';

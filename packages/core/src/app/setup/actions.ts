@@ -5,10 +5,10 @@ import fs from 'fs';
 import path from 'path';
 import crypto from 'crypto';
 
-export async function testDatabaseConnection(connectionString: string) {
+export async function testDatabaseConnection(dbUrl: string, provider: string) {
   try {
-    const adapter = getDatabaseAdapter();
-    const success = await adapter.testConnection(connectionString);
+    const adapter = getDatabaseAdapter(provider);
+    const success = await adapter.testConnection(dbUrl);
     if (!success) throw new Error("Connection failed");
     return { success: true };
   } catch (error: any) {
@@ -25,9 +25,9 @@ export async function saveSetupConfig(dbUrl: string) {
   }
 }
 
-export async function runSetupMigrations(dbUrl: string) {
+export async function runSetupMigrations(dbUrl: string, provider: string) {
   try {
-    const adapter = getDatabaseAdapter();
+    const adapter = getDatabaseAdapter(provider);
     await adapter.migrate(dbUrl);
     return { success: true };
   } catch (error: any) {
@@ -35,18 +35,15 @@ export async function runSetupMigrations(dbUrl: string) {
   }
 }
 
-export async function seedSetupAdmin(dbUrl: string, formData: FormData) {
+export async function seedSetupAdmin(dbUrl: string, provider: string, formData: FormData) {
   try {
     const siteName = formData.get('siteName') as string;
     const email = formData.get('email') as string;
     const password = formData.get('password') as string;
 
-    // MVP plain-text or basic hashing. In production, use bcrypt/argon2.
-    // Drizzle auth adapter might handle this, but we'll do a simple hash for MVP since NextAuth will check it.
-    // For MVP, if there's no hashing function available yet, we just store plain text or simple sha256.
     const passwordHash = crypto.createHash('sha256').update(password).digest('hex');
 
-    const adapter = getDatabaseAdapter();
+    const adapter = getDatabaseAdapter(provider);
     await adapter.seedAdmin(dbUrl, { siteName, email, passwordHash });
 
     return { success: true };
@@ -63,9 +60,9 @@ export async function getEnvironmentDetails() {
   };
 }
 
-export async function finalizeSetup(dbUrl: string, authSecret: string) {
+export async function finalizeSetup(dbUrl: string, provider: string, authSecret: string) {
   try {
-    const envFileContent = `DATABASE_URL="${dbUrl}"\nAUTH_SECRET="${authSecret}"\n`;
+    const envFileContent = `DATABASE_URL="${dbUrl}"\nDATABASE_PROVIDER="${provider}"\nAUTH_SECRET="${authSecret}"\n`;
     
     // Attempt local write for local dev, but don't fail if it doesn't work (like on Vercel)
     try {
