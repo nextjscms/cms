@@ -121,8 +121,11 @@ function SetupWizard() {
     try {
       const finalRes = await finalizeSetup(url, authSecret);
       if (finalRes.success && finalRes.envFileContent) {
-        envString = finalRes.envFileContent;
-        setEnvContent(finalRes.envFileContent);
+        // Automatically grab the deployment URL from the browser and append NEXTAUTH_URL
+        const originUrl = typeof window !== 'undefined' ? window.location.origin : '';
+        const finalEnv = finalRes.envFileContent + `NEXTAUTH_URL="${originUrl}"\n`;
+        envString = finalEnv;
+        setEnvContent(finalEnv);
       }
       const vDetails = await getEnvironmentDetails();
       setVercelDetails(vDetails);
