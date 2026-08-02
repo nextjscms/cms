@@ -29,7 +29,7 @@ export function MediaClient({ pickerMode = false, onSelect }: { pickerMode?: boo
   const [folders, setFolders] = useState<any[]>([]);
   const [media, setMedia] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
-  const [uploadingFiles, setUploadingFiles] = useState<{ id: string, file: File, targetFolderId: number | null, previewUrl?: string, done?: boolean, url?: string }[]>([]);
+  const [uploadingFiles, setUploadingFiles] = useState<{ id: string, file: File, targetFolderId: number | null, previewUrl?: string, done?: boolean, url?: string, originalIndex: number, totalCount: number }[]>([]);
   const [newFolderName, setNewFolderName] = useState('');
 
   // File Details State
