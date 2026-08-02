@@ -27,7 +27,7 @@ export default function PagesAdminPage() {
         </Link>
       </div>
 
-      <div className="rounded-md border border-neutral-200 bg-white overflow-hidden shadow-sm">
+      <div className="rounded-md border border-neutral-200 bg-white overflow-hidden">
         <Table>
           <TableHeader className="bg-neutral-50/50">
             <TableRow>

@@ -101,3 +101,23 @@ export const menuItems = pgTable("menu_items", {
   parentId: integer("parent_id"), // For nested menus
   order: integer("order").default(0).notNull(),
 });
+
+export const mediaFolders = pgTable("media_folders", {
+  id: serial("id").primaryKey(),
+  name: text("name").notNull(),
+  parentId: integer("parent_id"), // Self-referencing for nested folders
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export const media = pgTable("media", {
+  id: serial("id").primaryKey(),
+  filename: text("filename").notNull(),
+  url: text("url").notNull(),
+  mimeType: text("mime_type").notNull(),
+  size: integer("size").notNull(),
+  altText: text("alt_text"),
+  sizes: jsonb("sizes"),
+  folderId: integer("folder_id").references(() => mediaFolders.id),
+  authorId: integer("author_id").references(() => users.id),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});

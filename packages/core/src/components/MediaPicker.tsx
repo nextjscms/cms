@@ -2,9 +2,8 @@
 
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Image as ImageIcon, X, UploadCloud, Link as LinkIcon } from 'lucide-react';
-import { Label } from '@/components/ui/label';
+import { Image as ImageIcon, X, Link as LinkIcon } from 'lucide-react';
+import { MediaClient } from '@/app/admin/(dashboard)/media/MediaClient';
 
 interface MediaPickerProps {
   value: string;
@@ -14,15 +13,13 @@ interface MediaPickerProps {
 
 export function MediaPicker({ value, onChange, id }: MediaPickerProps) {
   const [isOpen, setIsOpen] = useState(false);
-  const [tempUrl, setTempUrl] = useState('');
 
   const handleOpen = () => {
-    setTempUrl(value || '');
     setIsOpen(true);
   };
 
-  const handleSave = () => {
-    onChange(tempUrl);
+  const handleSelect = (media: any) => {
+    onChange(media.url);
     setIsOpen(false);
   };
 
@@ -65,40 +62,16 @@ export function MediaPicker({ value, onChange, id }: MediaPickerProps) {
 
       {isOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 backdrop-blur-sm">
-          <div className="bg-white rounded-xl shadow-xl w-full max-w-2xl overflow-hidden flex flex-col max-h-[85vh]">
-            <div className="px-6 py-4 border-b border-slate-200 flex justify-between items-center bg-slate-50/50">
+          <div className="bg-white rounded-xl shadow-xl w-full max-w-5xl h-[85vh] overflow-hidden flex flex-col">
+            <div className="px-6 py-4 border-b border-slate-200 flex justify-between items-center bg-slate-50/50 shrink-0">
               <h2 className="text-lg font-semibold text-slate-900">Select Media</h2>
               <button type="button" onClick={() => setIsOpen(false)} className="text-slate-400 hover:text-slate-600 p-1 rounded-md hover:bg-slate-200/50 transition-colors">
                 <X className="w-5 h-5" />
               </button>
             </div>
             
-            <div className="p-6 flex-1 overflow-y-auto">
-              <div className="space-y-6">
-                <div className="border-2 border-dashed border-slate-200 rounded-xl p-8 text-center bg-slate-50 flex flex-col items-center justify-center space-y-3">
-                  <div className="w-12 h-12 bg-white rounded-full flex items-center justify-center text-slate-400 shadow-sm border border-slate-100">
-                    <UploadCloud className="w-6 h-6" />
-                  </div>
-                  <h3 className="text-base font-medium text-slate-900">Media Library</h3>
-                  <p className="text-sm text-slate-500 max-w-xs">
-                    File uploads are not yet configured. Please use a direct URL for now.
-                  </p>
-                </div>
-
-                <div className="space-y-3">
-                  <Label htmlFor="media-url" className="text-sm font-medium text-slate-700">Media URL</Label>
-                  <div className="flex gap-2">
-                    <Input 
-                      id="media-url"
-                      placeholder="https://example.com/image.jpg"
-                      value={tempUrl}
-                      onChange={(e) => setTempUrl(e.target.value)}
-                      className="flex-1"
-                    />
-                    <Button type="button" onClick={handleSave}>Select</Button>
-                  </div>
-                </div>
-              </div>
+            <div className="flex-1 overflow-hidden relative flex flex-col bg-muted/10 p-2">
+              <MediaClient pickerMode onSelect={handleSelect} />
             </div>
           </div>
         </div>

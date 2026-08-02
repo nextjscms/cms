@@ -2,7 +2,7 @@ import { redirect } from 'next/navigation';
 import { getDb } from '@/db';
 import { settings, menus, menuItems } from '@/db/schema';
 import { eq } from 'drizzle-orm';
-import { getThemeComponent, loadThemeCSS } from '@/themes/registry';
+import { getThemeComponent } from '@/themes/registry';
 import CustomizerPreviewSync from '@/components/CustomizerPreviewSync';
 import fs from 'fs';
 import path from 'path';
@@ -26,8 +26,6 @@ export default async function FrontendLayout({ children }: { children: React.Rea
     throw error;
   }
 
-  // 2. Load Theme CSS
-  await loadThemeCSS(activeTheme);
 
   // 3. Load theme.json for defaults
   let defaultSettings: Record<string, string> = {};

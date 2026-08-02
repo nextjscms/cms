@@ -1,29 +1,25 @@
-import { Button } from '@/components/ui/button';
-import { UploadCloud, Image as ImageIcon } from 'lucide-react';
+import { MediaClient } from '@/app/admin/(dashboard)/media/MediaClient';
+import { getDatabaseAdapter } from '@/lib/registry';
 
-export default function MediaPage() {
+export default async function MediaPage() {
+  const dbUrl = process.env.DATABASE_URL;
+  if (!dbUrl) return <div>Database not configured</div>;
+
+  const adapter = getDatabaseAdapter(process.env.DATABASE_PROVIDER as any);
+  const db = adapter.getDb(dbUrl);
+
+  // We don't necessarily need to prefetch, but we could for initial load.
+  // To keep the component simple and interactive, we'll let the client fetch its own state.
+
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
+    <div className="h-full flex flex-col gap-6">
+      <div className="flex justify-between items-center shrink-0">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight text-slate-900">Media Library</h1>
-          <p className="text-slate-500 mt-1">Manage your uploaded images and files.</p>
+          <h1 className="text-3xl font-bold tracking-tight">Media Library</h1>
+          <p className="text-muted-foreground mt-2">Manage your images and files in Cloud Storage.</p>
         </div>
-        <Button>
-          <UploadCloud className="w-4 h-4 mr-2" />
-          Upload New
-        </Button>
       </div>
-
-      <div className="border-2 border-dashed border-neutral-200 rounded-xl p-12 text-center bg-white flex flex-col items-center justify-center space-y-3 shadow-sm min-h-[400px]">
-        <div className="w-16 h-16 bg-neutral-100 rounded-full flex items-center justify-center text-slate-400">
-          <ImageIcon className="w-8 h-8" />
-        </div>
-        <h3 className="text-lg font-medium text-slate-900">No media found</h3>
-        <p className="text-sm text-slate-500 max-w-sm">
-          You haven't uploaded any files yet. Drag and drop images here or click the upload button to get started.
-        </p>
-      </div>
+      <MediaClient />
     </div>
   );
 }

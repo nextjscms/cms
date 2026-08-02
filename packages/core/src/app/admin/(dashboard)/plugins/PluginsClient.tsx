@@ -4,13 +4,12 @@ import { useState, useEffect, useTransition } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Search, Download, CheckCircle, ExternalLink, Loader2, Package, Palette, CheckCircle2, Clock } from 'lucide-react';
+import { Search, Download, CheckCircle, ExternalLink, Loader2, Package, Puzzle, CheckCircle2, Clock } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { toast } from 'sonner';
-import Link from 'next/link';
-import { activateTheme, installTheme } from '@/app/admin/actions';
+import { installPlugin, togglePlugin } from '@/app/admin/actions';
 
-type ThemeInfo = {
+type PluginInfo = {
   slug: string;
   name: string;
   version?: string;
@@ -20,7 +19,7 @@ type ThemeInfo = {
   imageUrl?: string;
 };
 
-type MarketplaceTheme = {
+type MarketplacePlugin = {
   id: number;
   name: string;
   slug: string;
@@ -34,20 +33,10 @@ type MarketplaceTheme = {
   updatedAt: string;
 };
 
-interface MarketplaceClientProps {
-  localThemes: ThemeInfo[];
-  activeThemeSlug: string;
+interface PluginsClientProps {
+  localPlugins: PluginInfo[];
+  activePluginSlugs: string[];
 }
-
-// Converts "@nextjscms/theme-dark-mode" -> "Dark Mode"
-function formatThemeName(packageName: string) {
-  return packageName
-    .replace(/^@.*\/theme-/, '') // Removes "@org/theme-"
-    .replace(/-/g, ' ')          // Replaces dashes with spaces
-    .replace(/\b\w/g, char => char.toUpperCase()); // Capitalizes the first letter of each word
-}
-
-
 
 function isVersionGreater(v1: string, v2: string) {
   const parts1 = v1.split('.').map(Number);
@@ -61,8 +50,8 @@ function isVersionGreater(v1: string, v2: string) {
   return false;
 }
 
-export default function MarketplaceClient({ localThemes, activeThemeSlug }: MarketplaceClientProps) {
-  const [marketplaceThemes, setMarketplaceThemes] = useState<MarketplaceTheme[]>([]);
+export default function PluginsClient({ localPlugins, activePluginSlugs }: PluginsClientProps) {
+  const [marketplacePlugins, setMarketplacePlugins] = useState<MarketplacePlugin[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [debouncedQuery, setDebouncedQuery] = useState('');
@@ -75,12 +64,23 @@ export default function MarketplaceClient({ localThemes, activeThemeSlug }: Mark
     setInstallingSlug(slug);
     startTransition(async () => {
       try {
-        await installTheme(slug, url, version);
-        toast.success(`Theme installed successfully!`);
+        await installPlugin(slug, url, version);
+        toast.success(`Plugin installed successfully!`);
       } catch (err: any) {
-        toast.error(`Failed to install theme: ${err.message}`);
+        toast.error(`Failed to install plugin: ${err.message}`);
       } finally {
         setInstallingSlug(null);
+      }
+    });
+  };
+
+  const handleToggle = (slug: string, activate: boolean) => {
+    startTransition(async () => {
+      try {
+        await togglePlugin(slug, activate);
+        toast.success(activate ? 'Plugin activated' : 'Plugin deactivated');
+      } catch (err: any) {
+        toast.error(`Failed to toggle plugin: ${err.message}`);
       }
     });
   };
@@ -93,16 +93,16 @@ export default function MarketplaceClient({ localThemes, activeThemeSlug }: Mark
   }, [searchQuery]);
 
   useEffect(() => {
-    const fetchThemes = async () => {
+    const fetchPlugins = async () => {
       setLoading(true);
       setError('');
       try {
         const apiUrl = process.env.NEXT_PUBLIC_MARKETPLACE_API_URL || 'https://nextjscms-api.vercel.app';
-        const url = `${apiUrl}/api/themes${debouncedQuery ? `?q=${encodeURIComponent(debouncedQuery)}` : ''}`;
+        const url = `${apiUrl}/api/plugins${debouncedQuery ? `?q=${encodeURIComponent(debouncedQuery)}` : ''}`;
         const res = await fetch(url);
-        if (!res.ok) throw new Error('Failed to fetch marketplace themes');
+        if (!res.ok) throw new Error('Failed to fetch marketplace plugins');
         const data = await res.json();
-        setMarketplaceThemes(data.themes || []);
+        setMarketplacePlugins(data.plugins || []);
       } catch (err: any) {
         setError(err.message);
       } finally {
@@ -110,18 +110,20 @@ export default function MarketplaceClient({ localThemes, activeThemeSlug }: Mark
       }
     };
 
-    fetchThemes();
+    fetchPlugins();
   }, [debouncedQuery]);
 
-  // Filter marketplace themes: remove ones that are already installed locally
-  const filteredMarketplace = marketplaceThemes.filter(mt => {
-    return !localThemes.some(lt => lt.slug === mt.slug);
+  // Filter marketplace plugins: remove ones that are already installed locally
+  const filteredMarketplace = marketplacePlugins.filter(mp => {
+    return !localPlugins.some(lp => lp.slug === mp.slug);
   });
 
-  // Sort local themes so the active theme is always first
-  const sortedLocalThemes = [...localThemes].sort((a, b) => {
-    if (a.slug === activeThemeSlug) return -1;
-    if (b.slug === activeThemeSlug) return 1;
+  // Sort local plugins so active ones are first
+  const sortedLocalPlugins = [...localPlugins].sort((a, b) => {
+    const aActive = activePluginSlugs.includes(a.slug);
+    const bActive = activePluginSlugs.includes(b.slug);
+    if (aActive && !bActive) return -1;
+    if (!aActive && bActive) return 1;
     return a.name.localeCompare(b.name);
   });
 
@@ -129,8 +131,8 @@ export default function MarketplaceClient({ localThemes, activeThemeSlug }: Mark
     <div className="flex-1 flex flex-col">
       <div className="flex flex-col md:flex-row md:items-center justify-between mb-8 gap-4">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight text-slate-900">Themes</h1>
-          <p className="text-slate-500 mt-1">Manage your site's appearance and discover new themes.</p>
+          <h1 className="text-3xl font-bold tracking-tight text-slate-900">Plugins</h1>
+          <p className="text-slate-500 mt-1">Extend the functionality of your CMS.</p>
         </div>
         <div className="relative w-full md:w-72">
           {loading ? (
@@ -139,7 +141,7 @@ export default function MarketplaceClient({ localThemes, activeThemeSlug }: Mark
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
           )}
           <Input
-            placeholder="Search themes..."
+            placeholder="Search plugins..."
             className="pl-9 bg-white"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
@@ -153,10 +155,10 @@ export default function MarketplaceClient({ localThemes, activeThemeSlug }: Mark
         </div>
       )}
 
-      {localThemes.length === 0 && filteredMarketplace.length === 0 && !loading && !error ? (
+      {localPlugins.length === 0 && filteredMarketplace.length === 0 && !loading && !error ? (
         <div className="bg-slate-50 text-slate-500 p-8 rounded-lg text-center border border-slate-100">
           <Package className="w-12 h-12 mx-auto text-slate-300 mb-3" />
-          <h3 className="font-medium text-slate-900">No themes found</h3>
+          <h3 className="font-medium text-slate-900">No plugins found</h3>
           <p className="text-sm mt-1">Try adjusting your search query.</p>
         </div>
       ) : (
@@ -169,28 +171,28 @@ export default function MarketplaceClient({ localThemes, activeThemeSlug }: Mark
           )}
 
           <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
-            {/* Render Local Themes First */}
-            {sortedLocalThemes.map(theme => {
-              const isActive = theme.slug === activeThemeSlug;
+            {/* Render Local Plugins First */}
+            {sortedLocalPlugins.map(plugin => {
+              const isActive = activePluginSlugs.includes(plugin.slug);
 
               // Check for updates
-              const remoteCounterpart = marketplaceThemes.find(mt => mt.slug === theme.slug);
-              const hasUpdate = remoteCounterpart && remoteCounterpart.version && theme.version && isVersionGreater(remoteCounterpart.version, theme.version);
+              const remoteCounterpart = marketplacePlugins.find(mp => mp.slug === plugin.slug);
+              const hasUpdate = remoteCounterpart && remoteCounterpart.version && plugin.version && isVersionGreater(remoteCounterpart.version, plugin.version);
 
               return (
-                <Card key={theme.slug} size="sm" className={`pt-0 h-full overflow-hidden transition-all border-transparent ${isActive ? 'shadow-lg shadow-emerald-500/20' : 'hover:shadow-md'}`}>
+                <Card key={plugin.slug} size="sm" className={`pt-0 h-full overflow-hidden transition-all border-transparent ${isActive ? 'shadow-lg shadow-blue-500/20' : 'hover:shadow-md'}`}>
                   <div className="h-32 shrink-0 bg-slate-50 flex items-center justify-center border-b border-slate-100 overflow-hidden relative">
-                    {theme.imageUrl ? (
-                      <img src={theme.imageUrl} alt={theme.name} className="object-cover w-full h-full" />
+                    {plugin.imageUrl ? (
+                      <img src={plugin.imageUrl} alt={plugin.name} className="object-cover w-full h-full" />
                     ) : (
-                      <Palette className={`w-12 h-12 ${isActive ? 'text-emerald-300' : 'text-slate-300'}`} />
+                      <Puzzle className={`w-12 h-12 ${isActive ? 'text-blue-300' : 'text-slate-300'}`} />
                     )}
                   </div>
                   <CardHeader>
                     <div className="flex items-center justify-between">
-                      <CardTitle>{theme.name}</CardTitle>
+                      <CardTitle>{plugin.name}</CardTitle>
                       {isActive && (
-                        <span className="flex items-center text-xs font-medium text-emerald-600 bg-emerald-50 px-2 py-1 rounded-full">
+                        <span className="flex items-center text-xs font-medium text-blue-600 bg-blue-50 px-2 py-1 rounded-full">
                           <CheckCircle2 className="w-3 h-3 mr-1" />
                           Active
                         </span>
@@ -200,17 +202,17 @@ export default function MarketplaceClient({ localThemes, activeThemeSlug }: Mark
                       {hasUpdate ? (
                         <div className="flex flex-col gap-1 text-sm">
                           <span className="font-medium text-amber-600">Update Available!</span>
-                          <span className="text-slate-500">Installed: v{theme.version} &rarr; Latest: v{remoteCounterpart!.version}</span>
+                          <span className="text-slate-500">Installed: v{plugin.version} &rarr; Latest: v{remoteCounterpart!.version}</span>
                         </div>
                       ) : (
                         <div className="flex flex-wrap items-center gap-2">
                           <div>
-                            {theme.version && <span className="font-medium text-slate-700">v{theme.version}</span>}
-                            {theme.author && ` by ${theme.author}`}
+                            {plugin.version && <span className="font-medium text-slate-700">v{plugin.version}</span>}
+                            {plugin.author && ` by ${plugin.author}`}
                           </div>
-                          {theme.category && (
+                          {plugin.category && (
                             <span className="px-2 py-0.5 rounded-full bg-slate-100 text-slate-500 text-[10px] uppercase font-bold tracking-wider">
-                              {theme.category}
+                              {plugin.category}
                             </span>
                           )}
                         </div>
@@ -218,34 +220,29 @@ export default function MarketplaceClient({ localThemes, activeThemeSlug }: Mark
                     </CardDescription>
                   </CardHeader>
                   <CardContent className="flex-1">
-                    <p className="text-sm text-slate-600 line-clamp-2 min-h-[2.5rem]" title={theme.description}>
-                      {theme.description}
+                    <p className="text-sm text-slate-600 line-clamp-2 min-h-[2.5rem]" title={plugin.description}>
+                      {plugin.description}
                     </p>
                   </CardContent>
                   <CardFooter className="flex gap-2">
                     {isActive ? (
-                      <Link href="/admin/themes/customizer" className="flex-1">
-                        <Button variant="outline" className="w-full border-emerald-200 hover:bg-emerald-50 hover:text-emerald-700">
-                          Customize
-                        </Button>
-                      </Link>
+                      <Button onClick={() => handleToggle(plugin.slug, false)} variant="outline" className="w-full text-slate-700 hover:text-red-700 hover:bg-red-50 hover:border-red-200">
+                        Deactivate
+                      </Button>
                     ) : (
-                      <form action={activateTheme} className="flex-1">
-                        <input type="hidden" name="themeSlug" value={theme.slug} />
-                        <Button type="submit" className="w-full bg-slate-900 hover:bg-slate-800">
-                          Activate Theme
-                        </Button>
-                      </form>
+                      <Button onClick={() => handleToggle(plugin.slug, true)} className="w-full bg-slate-900 hover:bg-slate-800">
+                        Activate Plugin
+                      </Button>
                     )}
 
                     {hasUpdate && remoteCounterpart?.url && (
                       <Button
                         variant="outline"
                         className="flex-1 border-amber-200 text-amber-700 hover:bg-amber-50"
-                        disabled={installingSlug === theme.slug}
-                        onClick={() => handleInstall(theme.slug, remoteCounterpart.url, remoteCounterpart.version)}
+                        disabled={installingSlug === plugin.slug}
+                        onClick={() => handleInstall(plugin.slug, remoteCounterpart.url, remoteCounterpart.version)}
                       >
-                        {installingSlug === theme.slug ? (
+                        {installingSlug === plugin.slug ? (
                           <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Updating...</>
                         ) : (
                           <><Download className="w-4 h-4 mr-2" /> Update</>
@@ -257,60 +254,60 @@ export default function MarketplaceClient({ localThemes, activeThemeSlug }: Mark
               );
             })}
 
-            {/* Render Marketplace Themes */}
-            {filteredMarketplace.map(theme => {
+            {/* Render Marketplace Plugins */}
+            {filteredMarketplace.map(plugin => {
               return (
-                <Card key={theme.id} size="sm" className="pt-0 h-full overflow-hidden transition-all border-transparent hover:shadow-md">
+                <Card key={plugin.id} size="sm" className="pt-0 h-full overflow-hidden transition-all border-transparent hover:shadow-md">
                   <div className="h-32 shrink-0 bg-slate-900 flex items-center justify-center border-b border-slate-800 overflow-hidden relative">
-                    {theme.imageUrl ? (
-                      <img src={theme.imageUrl} alt={theme.name} className="object-cover w-full h-full" />
+                    {plugin.imageUrl ? (
+                      <img src={plugin.imageUrl} alt={plugin.name} className="object-cover w-full h-full" />
                     ) : (
                       <Package className="w-12 h-12 text-slate-700" />
                     )}
                   </div>
                   <CardHeader>
                     <div className="flex items-center justify-between">
-                      <CardTitle className="truncate" title={theme.name}>{theme.name}</CardTitle>
+                      <CardTitle className="truncate" title={plugin.name}>{plugin.name}</CardTitle>
                     </div>
                     <CardDescription className="space-y-1.5">
                       <div className="flex flex-wrap items-center gap-2">
                         <div>
-                          {theme.version && <span className="font-medium text-slate-700">v{theme.version}</span>}
-                          {theme.author && ` by ${theme.author}`}
+                          {plugin.version && <span className="font-medium text-slate-700">v{plugin.version}</span>}
+                          {plugin.author && ` by ${plugin.author}`}
                         </div>
-                        {theme.category && (
+                        {plugin.category && (
                           <span className="px-2 py-0.5 rounded-full bg-slate-100 text-slate-500 text-[10px] uppercase font-bold tracking-wider">
-                            {theme.category}
+                            {plugin.category}
                           </span>
                         )}
                       </div>
                       <div className="flex items-center gap-3 text-xs text-slate-500">
                         <span className="flex items-center gap-1" title="Total Downloads">
                           <Download className="w-3 h-3" />
-                          {theme.totalDownloads || 0}
+                          {plugin.totalDownloads || 0}
                         </span>
                         <span className="flex items-center gap-1" title="Last Updated">
                           <Clock className="w-3 h-3" />
-                          {new Date(theme.updatedAt).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}
+                          {new Date(plugin.updatedAt).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}
                         </span>
                       </div>
                     </CardDescription>
                   </CardHeader>
                   <CardContent className="flex-1">
-                    <p className="text-sm text-slate-600 line-clamp-2 min-h-[2.5rem]" title={theme.description}>
-                      {theme.description || 'No description provided.'}
+                    <p className="text-sm text-slate-600 line-clamp-2 min-h-[2.5rem]" title={plugin.description}>
+                      {plugin.description || 'No description provided.'}
                     </p>
                   </CardContent>
                   <CardFooter>
                     <Button
                       className="w-full bg-blue-600 hover:bg-blue-700 text-white"
-                      disabled={installingSlug === theme.slug}
-                      onClick={() => handleInstall(theme.slug, theme.url, theme.version)}
+                      disabled={installingSlug === plugin.slug}
+                      onClick={() => handleInstall(plugin.slug, plugin.url, plugin.version)}
                     >
-                      {installingSlug === theme.slug ? (
+                      {installingSlug === plugin.slug ? (
                         <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Installing...</>
                       ) : (
-                        <><Download className="w-4 h-4 mr-2" /> Install Theme</>
+                        <><Download className="w-4 h-4 mr-2" /> Install Plugin</>
                       )}
                     </Button>
                   </CardFooter>

@@ -17,7 +17,7 @@ import { notFound } from 'next/navigation';
 
 export default async function PostsPage({ searchParams }: { searchParams: Promise<{ type?: string }> }) {
   const resolvedParams = await searchParams;
-  const typeId = resolvedParams.type ? parseInt(resolvedParams.type, 10) : undefined;
+  const typeSlugParam = resolvedParams.type;
   
   const db = getDb();
   let typeName = 'Posts';
@@ -25,9 +25,12 @@ export default async function PostsPage({ searchParams }: { searchParams: Promis
   let emptyMsg = "No posts found. Ready to write your first one?";
   let customColumns: any[] = [];
   
-  if (typeId) {
-    const [pt] = await db.select().from(postTypes).where(eq(postTypes.id, typeId));
+  let typeId: number | undefined = undefined;
+  
+  if (typeSlugParam && typeSlugParam !== 'post') {
+    const [pt] = await db.select().from(postTypes).where(eq(postTypes.slug, typeSlugParam));
     if (!pt) notFound();
+    typeId = pt.id;
     typeName = pt.name;
     typeSlug = pt.slug;
     emptyMsg = `No ${pt.name.toLowerCase()} found. Ready to write your first one?`;
@@ -48,7 +51,7 @@ export default async function PostsPage({ searchParams }: { searchParams: Promis
         </Link>
       </div>
 
-      <div className="rounded-md border border-neutral-200 bg-white overflow-hidden shadow-sm">
+      <div className="rounded-md border border-neutral-200 bg-white overflow-hidden">
         <Table>
           <TableHeader className="bg-neutral-50/50">
             <TableRow>

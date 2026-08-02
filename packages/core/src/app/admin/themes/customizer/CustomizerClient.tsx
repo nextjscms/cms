@@ -39,7 +39,7 @@ export default function CustomizerClient({ activeTheme, themeData, schema, initi
   return (
     <div className="flex h-screen bg-slate-100 overflow-hidden text-sm">
       {/* Sidebar Form */}
-      <aside className="w-[400px] flex flex-col bg-white border-r border-slate-200 shadow-xl z-10">
+      <aside className="w-[400px] flex flex-col bg-white border-r border-slate-200 z-10">
         <header className="h-16 px-6 border-b border-slate-200 flex items-center justify-between bg-slate-50">
           <div>
             <h1 className="font-bold text-slate-900 tracking-tight">Theme Customizer</h1>
@@ -98,7 +98,7 @@ export default function CustomizerClient({ activeTheme, themeData, schema, initi
                             id={field.id} 
                             value={currentValue === 'true' || currentValue === true ? 'true' : 'false'}
                             onChange={(e) => handleSettingChange(field.id, e.target.value, isGlobal)}
-                            className="flex h-9 w-full rounded-md border border-slate-200 bg-white px-3 py-1 text-sm shadow-sm focus:outline-none focus:ring-1 focus:ring-slate-950"
+                            className="flex h-9 w-full rounded-md border border-slate-200 bg-white px-3 py-1 text-sm focus:outline-none focus:ring-1 focus:ring-slate-950"
                           >
                             <option value="true">Yes</option>
                             <option value="false">No</option>
@@ -108,7 +108,7 @@ export default function CustomizerClient({ activeTheme, themeData, schema, initi
                             id={field.id} 
                             value={currentValue}
                             onChange={(e) => handleSettingChange(field.id, e.target.value, isGlobal)}
-                            className="flex h-9 w-full rounded-md border border-slate-200 bg-white px-3 py-1 text-sm shadow-sm focus:outline-none focus:ring-1 focus:ring-slate-950"
+                            className="flex h-9 w-full rounded-md border border-slate-200 bg-white px-3 py-1 text-sm focus:outline-none focus:ring-1 focus:ring-slate-950"
                           >
                             {field.options?.map((opt: any) => (
                               <option key={opt.value} value={opt.value}>{opt.label}</option>
@@ -147,7 +147,7 @@ export default function CustomizerClient({ activeTheme, themeData, schema, initi
 
       {/* Live Preview Iframe */}
       <main className="flex-1 flex flex-col items-center justify-center p-4 bg-slate-800">
-        <div className="w-full h-full max-w-[1400px] bg-white rounded-lg shadow-2xl overflow-hidden border border-slate-700 relative">
+        <div className="w-full h-full max-w-[1400px] bg-white rounded-lg overflow-hidden border border-slate-700 relative">
           <div className="absolute top-0 left-0 w-full h-8 bg-slate-900 border-b border-slate-800 flex items-center px-4 gap-2">
             <div className="w-3 h-3 rounded-full bg-red-500"></div>
             <div className="w-3 h-3 rounded-full bg-yellow-500"></div>

@@ -16,7 +16,7 @@ export default function AdminDashboard() {
           <p className="text-slate-500 mt-1">Here is what is happening with your site today.</p>
         </div>
         <div className="flex gap-3">
-          <Link href="/admin/posts/new" className="inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 bg-slate-900 text-white shadow hover:bg-slate-900/90 h-9 px-4 py-2">
+          <Link href="/admin/posts/new" className="inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 bg-slate-900 text-white hover:bg-slate-900/90 h-9 px-4 py-2">
             <Plus className="w-4 h-4 mr-2" />
             New Post
           </Link>

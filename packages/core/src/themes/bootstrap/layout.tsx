@@ -1,4 +1,6 @@
 import React from 'react';
+import Link from 'next/link';
+import './theme.css';
 
 type LayoutProps = {
   children: React.ReactNode;

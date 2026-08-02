@@ -2,22 +2,38 @@
 // This allows developers to drop a new theme folder in `src/themes/` and have it 
 // picked up automatically at runtime based on the database setting!
 import React from 'react';
+const globalForRegistry = globalThis as unknown as {
+  themeCache: Map<string, any>;
+};
+
+if (!globalForRegistry.themeCache) {
+  globalForRegistry.themeCache = new Map<string, any>();
+}
+const themeCache = globalForRegistry.themeCache;
 
 export type ThemeComponentType = 'layout' | 'post' | 'page' | 'archive' | '404' | string;
 
 export async function getThemeComponent(themeName: string, component: ThemeComponentType) {
+  const cacheKey = `${themeName}:${component}`;
+  if (themeCache.has(cacheKey)) {
+    return themeCache.get(cacheKey);
+  }
+
   try {
     const module = await import(`@/themes/${themeName}/${component}`);
+    themeCache.set(cacheKey, module.default);
     return module.default;
   } catch (error) {
     try {
       const fallback = await import(`@/themes/default/${component}`);
+      themeCache.set(cacheKey, fallback.default);
       return fallback.default;
     } catch (fallbackError) {
       // If it's a custom post type that doesn't have a template, fallback to generic post
       if (component !== 'post' && component !== 'page' && component !== '404' && component !== 'layout' && component !== 'archive') {
         try {
           const genericFallback = await import(`@/themes/default/post`);
+          themeCache.set(cacheKey, genericFallback.default);
           return genericFallback.default;
         } catch (e) {}
       }
@@ -27,13 +43,3 @@ export async function getThemeComponent(themeName: string, component: ThemeCompo
   }
 }
 
-// Dynamically import the theme's CSS file if it exists
-export async function loadThemeCSS(themeName: string) {
-  try {
-    // Import CSS dynamically. Next.js handles this during SSR and injects the stylesheet!
-    await import(`@/themes/${themeName}/theme.css`);
-  } catch (e) {
-    // It's perfectly fine if a theme doesn't have a theme.css file (e.g. they just use Tailwind)
-    // We swallow the error silently.
-  }
-}

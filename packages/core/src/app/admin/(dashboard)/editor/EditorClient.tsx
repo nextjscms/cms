@@ -125,7 +125,7 @@ export default function EditorClient({ initialData, type, customSchema, postType
       {/* Editor Header */}
       <div className="flex items-center justify-between border-b border-slate-200 pb-4 pt-2">
         <div className="flex items-center gap-4 flex-1">
-          <Link href={type === 'page' ? "/admin/pages" : "/admin/posts"}>
+          <Link href={type === 'page' ? "/admin/pages" : type === 'post' ? "/admin/posts" : `/admin/posts?type=${type}`}>
             <Button variant="ghost" size="icon" className="hover:bg-slate-100">
               <ArrowLeft className="w-5 h-5" />
             </Button>
@@ -178,7 +178,7 @@ export default function EditorClient({ initialData, type, customSchema, postType
         
         {/* TipTap Editor Container */}
         <div className="flex-1 flex flex-col overflow-hidden">
-          <Card className="flex-1 overflow-y-auto bg-white border border-slate-200 shadow-sm flex flex-col rounded-xl">
+          <Card className="flex-1 overflow-y-auto bg-white border border-slate-200 flex flex-col rounded-xl">
             
             {/* Notion-style Toolbar */}
             <div className="sticky top-0 z-10 border-b border-slate-100 p-1.5 flex gap-1 bg-white/80 backdrop-blur-sm rounded-t-xl">
@@ -256,7 +256,7 @@ export default function EditorClient({ initialData, type, customSchema, postType
 
         {/* Post Settings Sidebar */}
         {isSidebarOpen && (
-          <div className="w-80 flex flex-col space-y-6 bg-slate-50 rounded-xl p-5 border border-slate-200 overflow-y-auto shadow-inner">
+          <div className="w-80 flex flex-col space-y-6 bg-slate-50 rounded-xl p-5 border border-slate-200 overflow-y-auto">
             <div>
               <h3 className="font-semibold text-slate-900 mb-4">{type === 'page' ? 'Page' : 'Post'} Settings</h3>
               

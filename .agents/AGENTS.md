@@ -33,3 +33,22 @@ If a theme does not use Tailwind CSS, developers must still rely on the injected
 3. Use these standard CSS classes in your React components.
 
 These practices ensure zero specificity conflicts between the developer's styling and the user's database settings, and allow full compatibility with dynamic Live Preview in the CMS Customizer.
+
+## Admin Backend Styling
+Do not use box shadows in the admin backend (e.g., avoid Tailwind classes like `shadow-sm`, `shadow`, `shadow-md`, `shadow-lg`). The admin UI should be flat.
+
+## User Confirmations
+When asking the user to confirm destructive actions (e.g., deleting a folder or file), use a Sonner `toast` with an `action` instead of standard `window.confirm` dialogs.
+Example:
+```tsx
+toast('Are you sure you want to delete this?', {
+  action: {
+    label: 'Delete',
+    onClick: () => { /* proceed with deletion */ }
+  },
+  cancel: {
+    label: 'Cancel',
+    onClick: () => {}
+  }
+});
+```

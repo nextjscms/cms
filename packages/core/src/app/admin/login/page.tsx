@@ -45,9 +45,9 @@ export default function LoginPage() {
 
   return (
     <div className="min-h-screen bg-neutral-100 flex items-center justify-center p-4">
-      <Card className="w-full max-w-md shadow-lg border-0 overflow-hidden pt-0">
+      <Card className="w-full max-w-md border-0 overflow-hidden pt-0">
         <CardHeader className="space-y-3 text-center pt-8 pb-6 bg-slate-900 text-white rounded-t-xl">
-          <div className="mx-auto bg-slate-800 p-3 rounded-full w-14 h-14 flex items-center justify-center mb-2 shadow-inner">
+          <div className="mx-auto bg-slate-800 p-3 rounded-full w-14 h-14 flex items-center justify-center mb-2">
             <Lock className="w-7 h-7 text-emerald-400" />
           </div>
           <CardTitle className="text-2xl font-bold tracking-tight">NextjsCMS Admin</CardTitle>
@@ -86,7 +86,7 @@ export default function LoginPage() {
               </div>
             )}
             
-            <Button type="submit" className="w-full h-11 text-base shadow-sm" disabled={loading}>
+            <Button type="submit" className="w-full h-11 text-base" disabled={loading}>
               {loading ? (
                 <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Authenticating...</>
               ) : (

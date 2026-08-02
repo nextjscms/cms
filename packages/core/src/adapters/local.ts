@@ -1,7 +1,8 @@
 import fs from 'fs/promises';
 import path from 'path';
+import { StorageAdapter } from './storage';
 
-export class LocalStorageAdapter {
+export class LocalStorageAdapter implements StorageAdapter {
   private uploadDir: string;
 
   constructor() {
