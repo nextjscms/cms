@@ -56,24 +56,45 @@ export default function AutoInstallerSettings({ initialOwner, initialRepo, hasTo
         {error && <div className="text-red-500 text-sm">{error}</div>}
         {success && <div className="text-green-500 text-sm">{success}</div>}
         
-        <div className="grid grid-cols-2 gap-4">
-          <div className="space-y-2">
-            <Label>GitHub Owner / Org</Label>
-            <Input 
-              value={githubOwner} 
-              onChange={e => setGithubOwner(e.target.value)} 
-              placeholder="e.g. your-username" 
-            />
+        {githubOwner && githubRepo ? (
+          <div className="bg-slate-50 border border-slate-200 rounded-lg p-4 flex items-center justify-between">
+            <div className="space-y-1">
+              <p className="text-sm font-medium text-slate-900">Linked Repository</p>
+              <a 
+                href={`https://github.com/${githubOwner}/${githubRepo}`} 
+                target="_blank" 
+                rel="noreferrer"
+                className="text-sm text-blue-600 hover:underline flex items-center gap-1"
+              >
+                github.com/{githubOwner}/{githubRepo}
+              </a>
+            </div>
+            {hasToken && (
+              <span className="inline-flex items-center rounded-full bg-green-50 px-2 py-1 text-xs font-medium text-green-700 ring-1 ring-inset ring-green-600/20">
+                Active
+              </span>
+            )}
           </div>
-          <div className="space-y-2">
-            <Label>Repository Name</Label>
-            <Input 
-              value={githubRepo} 
-              onChange={e => setGithubRepo(e.target.value)} 
-              placeholder="e.g. nextjscms-site" 
-            />
+        ) : (
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label>GitHub Owner / Org</Label>
+              <Input 
+                value={githubOwner} 
+                onChange={e => setGithubOwner(e.target.value)} 
+                placeholder="e.g. your-username" 
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>Repository Name</Label>
+              <Input 
+                value={githubRepo} 
+                onChange={e => setGithubRepo(e.target.value)} 
+                placeholder="e.g. nextjscms-site" 
+              />
+            </div>
           </div>
-        </div>
+        )}
       </CardContent>
       <CardFooter>
         <Button onClick={handleConnectGithub} className={hasToken ? "bg-green-600 hover:bg-green-700 text-white" : "bg-slate-900 hover:bg-slate-800"} disabled={loading}>
