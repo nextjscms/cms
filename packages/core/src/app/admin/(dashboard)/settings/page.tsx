@@ -2,14 +2,29 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import AutoInstallerSettings from './AutoInstallerSettings';
+import { getGitOpsSettings } from '@/lib/gitops';
 
-export default function SettingsPage() {
+export default async function SettingsPage() {
+  const gitOpsSettings = await getGitOpsSettings();
+  const hasToken = !!(gitOpsSettings && gitOpsSettings.githubToken);
+  
+  // Default from env if missing
+  const initialOwner = gitOpsSettings?.githubOwner || process.env.VERCEL_GIT_REPO_OWNER || '';
+  const initialRepo = gitOpsSettings?.githubRepo || process.env.VERCEL_GIT_REPO_SLUG || '';
+
   return (
     <div className="space-y-6">
       <div>
         <h1 className="text-3xl font-bold tracking-tight text-slate-900">Settings</h1>
         <p className="text-slate-500 mt-1">Manage your site configuration.</p>
       </div>
+
+      <AutoInstallerSettings 
+        initialOwner={initialOwner} 
+        initialRepo={initialRepo} 
+        hasToken={hasToken} 
+      />
 
       <div className="grid gap-6 md:grid-cols-2">
         <Card>

@@ -4,19 +4,9 @@ import { useState, useEffect, useTransition } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Search, Download, CheckCircle, ExternalLink, Loader2, Package, Puzzle, CheckCircle2, Clock, Settings } from 'lucide-react';
-import { Badge } from '@/components/ui/badge';
+import { Search, Download, Loader2, Package, Puzzle, CheckCircle2, Clock, Settings } from 'lucide-react';
 import { toast } from 'sonner';
 import { installPlugin, togglePlugin } from '@/app/admin/actions';
-import { getPluginSettings, savePluginSettings } from '@/app/admin/settings-actions';
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
 
 type PluginInfo = {
   slug: string;

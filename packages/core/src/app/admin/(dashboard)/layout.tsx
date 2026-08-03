@@ -23,7 +23,14 @@ import { eq } from 'drizzle-orm';
 import { settings, postTypes } from '@/db/schema';
 import { PluginUIs } from '@/plugins/registry';
 
+import { hasExistingUsers } from '@/app/admin/setup/setup-actions';
+
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {
+  const usersExist = await hasExistingUsers();
+  if (!usersExist) {
+    redirect('/admin/setup');
+  }
+
   const isAdmin = await hasPermission('admin');
   const db = getDb();
   let customPostTypes = [];

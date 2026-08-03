@@ -9,6 +9,7 @@ import path from 'path';
 import * as tar from 'tar';
 import { Readable } from 'stream';
 import { auth } from '@/auth';
+import { getGitOpsSettings, extractTarballToMemoryAndCommit, createGithubCommit } from '@/lib/gitops';
 import { nextjscms } from '@/lib/hooks';
 
 export async function activateTheme(formData: FormData) {
@@ -41,6 +42,14 @@ export async function installTheme(slug: string, downloadUrl: string, version?: 
 
   if (!finalResponse.ok) {
     throw new Error(`Failed to download theme tarball from API (${finalResponse.status}): ${finalResponse.statusText}`);
+  }
+
+  const gitOpsSettings = await getGitOpsSettings();
+  if (gitOpsSettings && gitOpsSettings.githubToken) {
+    console.log('GitOps enabled, pushing theme to GitHub');
+    await extractTarballToMemoryAndCommit(finalResponse.body, `src/themes/${slug}`, `Install NextjsCMS Theme: ${slug}`, gitOpsSettings);
+    revalidatePath('/admin/themes');
+    return { success: true };
   }
 
   // Create the target directory
@@ -95,13 +104,6 @@ export async function togglePlugin(slug: string, activate: boolean) {
     await db.insert(settings).values({ key: 'activePlugins', value: newValue });
   }
 
-  // Allow plugins to intercept plugin toggling (e.g., GitHub Deployment plugin)
-  const toggleInterceptor = await nextjscms.emit('togglePlugin', { slug, activate, handled: false });
-  if (toggleInterceptor && toggleInterceptor.handled) {
-    revalidatePath('/admin/plugins');
-    return { success: true };
-  }
-
   // Regenerate plugin registry
   const registryContent = `// @ts-nocheck
 // Auto-generated Plugin Registry
@@ -112,6 +114,19 @@ export const PluginUIs: Record<string, any> = {
 ${activePlugins.map((s, i) => `  '${s}': plugin${i},`).join('\n')}
 };
 `;
+
+  const gitOpsSettings = await getGitOpsSettings();
+  if (gitOpsSettings && gitOpsSettings.githubToken) {
+    console.log('GitOps enabled, pushing registry update to GitHub');
+    const files = [{
+      path: 'src/plugins/registry.ts',
+      content: Buffer.from(registryContent, 'utf-8')
+    }];
+    await createGithubCommit(files, `Toggle NextjsCMS Plugin: ${slug} (${activate ? 'Activate' : 'Deactivate'})`, gitOpsSettings);
+    revalidatePath('/admin/plugins');
+    return;
+  }
+
   try {
     fs.writeFileSync(path.join(process.cwd(), 'src/plugins/registry.ts'), registryContent);
   } catch (e: any) {
@@ -133,9 +148,11 @@ export async function installPlugin(slug: string, downloadUrl: string, version?:
     throw new Error(`Failed to download plugin tarball from API (${finalResponse.status}): ${finalResponse.statusText}`);
   }
 
-  // Allow plugins to intercept plugin installation (e.g., GitHub Deployment plugin)
-  const installInterceptor = await nextjscms.emit('installPlugin', { slug, downloadUrl, version, finalResponse, handled: false });
-  if (installInterceptor && installInterceptor.handled) {
+  const gitOpsSettings = await getGitOpsSettings();
+  if (gitOpsSettings && gitOpsSettings.githubToken) {
+    console.log('GitOps enabled, pushing plugin to GitHub');
+    await extractTarballToMemoryAndCommit(finalResponse.body, `src/plugins/${slug}`, `Install NextjsCMS Plugin: ${slug}`, gitOpsSettings);
+    revalidatePath('/admin/plugins');
     return { success: true };
   }
 
