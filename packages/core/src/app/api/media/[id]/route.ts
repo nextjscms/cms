@@ -58,7 +58,9 @@ export async function DELETE(req: Request, { params }: { params: Promise<{ id: s
 
     // Attempt to delete from S3/R2
     try {
-      const storageAdapter = await getStorageAdapter(db);
+      // Use the driver that was originally used to upload this file. 
+      // Fallback to undefined (which will use current active driver) if it's an old record without a driver.
+      const storageAdapter = await getStorageAdapter(db, mediaItem.driver || undefined);
       const urlsToDelete = new Set<string>();
       if (mediaItem.url) urlsToDelete.add(mediaItem.url);
 

@@ -4,10 +4,18 @@ import { useState, useEffect, useTransition } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Search, Download, CheckCircle, ExternalLink, Loader2, Package, Puzzle, CheckCircle2, Clock } from 'lucide-react';
+import { Search, Download, CheckCircle, ExternalLink, Loader2, Package, Puzzle, CheckCircle2, Clock, Settings } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { toast } from 'sonner';
-import { installPlugin, togglePlugin } from '@/app/admin/actions';
+import { installPlugin, togglePlugin, getPluginSettings, savePluginSettings } from '@/app/admin/actions';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 
 type PluginInfo = {
   slug: string;
@@ -17,6 +25,7 @@ type PluginInfo = {
   description?: string;
   category?: string;
   imageUrl?: string;
+  settingsSchema?: { key: string; label: string; type: string }[];
 };
 
 type MarketplacePlugin = {
@@ -180,7 +189,7 @@ export default function PluginsClient({ localPlugins, activePluginSlugs }: Plugi
               const hasUpdate = remoteCounterpart && remoteCounterpart.version && plugin.version && isVersionGreater(remoteCounterpart.version, plugin.version);
 
               return (
-                <Card key={plugin.slug} size="sm" className={`pt-0 h-full overflow-hidden transition-all border-transparent ${isActive ? 'shadow-lg shadow-blue-500/20' : 'hover:shadow-md'}`}>
+                <Card key={plugin.slug} size="sm" className={`pt-0 h-full overflow-hidden transition-all bordered}`}>
                   <div className="h-32 shrink-0 bg-slate-50 flex items-center justify-center border-b border-slate-100 overflow-hidden relative">
                     {plugin.imageUrl ? (
                       <img src={plugin.imageUrl} alt={plugin.name} className="object-cover w-full h-full" />
@@ -225,6 +234,11 @@ export default function PluginsClient({ localPlugins, activePluginSlugs }: Plugi
                     </p>
                   </CardContent>
                   <CardFooter className="flex gap-2">
+                    {isActive && plugin.settingsSchema && plugin.settingsSchema.length > 0 && (
+                      <a href={`/admin/settings/plugins/${plugin.slug}`} title="Plugin Settings" className="inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 border border-input bg-background hover:bg-accent hover:text-accent-foreground h-10 w-10 shrink-0">
+                        <Settings className="w-4 h-4 text-slate-700" />
+                      </a>
+                    )}
                     {isActive ? (
                       <Button onClick={() => handleToggle(plugin.slug, false)} variant="outline" className="w-full text-slate-700 hover:text-red-700 hover:bg-red-50 hover:border-red-200">
                         Deactivate
@@ -257,7 +271,7 @@ export default function PluginsClient({ localPlugins, activePluginSlugs }: Plugi
             {/* Render Marketplace Plugins */}
             {filteredMarketplace.map(plugin => {
               return (
-                <Card key={plugin.id} size="sm" className="pt-0 h-full overflow-hidden transition-all border-transparent hover:shadow-md">
+                <Card key={plugin.id} size="sm" className="pt-0 h-full overflow-hidden transition-all bordered">
                   <div className="h-32 shrink-0 bg-slate-900 flex items-center justify-center border-b border-slate-800 overflow-hidden relative">
                     {plugin.imageUrl ? (
                       <img src={plugin.imageUrl} alt={plugin.name} className="object-cover w-full h-full" />

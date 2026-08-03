@@ -4,6 +4,8 @@ import { getDb } from '@/db';
 import { settings } from '@/db/schema';
 import { eq, inArray } from 'drizzle-orm';
 import { auth } from '@/auth';
+import fs from 'fs';
+import path from 'path';
 
 export async function getMediaSettingsAction() {
   const session = await auth();
@@ -13,37 +15,15 @@ export async function getMediaSettingsAction() {
 
   const db = getDb();
   
-  const keys = [
-    'media.storage.driver',
-    'media.s3.bucketName',
-    'media.s3.publicUrl',
-    'media.s3.region',
-    'media.s3.endpoint',
-    'media.s3.accessKeyId',
-    'media.s3.secretAccessKey'
-  ];
-
-  const results = await db.select().from(settings).where(inArray(settings.key, keys));
+  const results = await db.select().from(settings).where(eq(settings.key, 'media.storage.driver'));
   
   const map: Record<string, string> = {
-    driver: 's3',
-    bucketName: '',
-    publicUrl: '',
-    region: 'auto',
-    endpoint: '',
-    accessKeyId: '',
-    secretAccessKey: ''
+    driver: 'local',
   };
 
-  results.forEach((row: any) => {
-    if (row.key === 'media.storage.driver') map.driver = row.value || 's3';
-    if (row.key === 'media.s3.bucketName') map.bucketName = row.value || '';
-    if (row.key === 'media.s3.publicUrl') map.publicUrl = row.value || '';
-    if (row.key === 'media.s3.region') map.region = row.value || 'auto';
-    if (row.key === 'media.s3.endpoint') map.endpoint = row.value || '';
-    if (row.key === 'media.s3.accessKeyId') map.accessKeyId = row.value ? '••••••••••••' : '';
-    if (row.key === 'media.s3.secretAccessKey') map.secretAccessKey = row.value ? '••••••••••••' : '';
-  });
+  if (results.length > 0 && results[0].value) {
+    map.driver = results[0].value;
+  }
 
   return map;
 }
@@ -57,29 +37,60 @@ export async function saveMediaSettingsAction(data: Record<string, string>) {
   const db = getDb();
 
   const toSave = [
-    { key: 'media.storage.driver', value: data.driver || 's3' },
-    { key: 'media.s3.bucketName', value: data.bucketName || '' },
-    { key: 'media.s3.publicUrl', value: data.publicUrl || '' },
-    { key: 'media.s3.region', value: data.region || 'auto' },
-    { key: 'media.s3.endpoint', value: data.endpoint || '' },
+    { key: 'media.storage.driver', value: data.driver || 'local' },
   ];
 
-  if (data.accessKeyId && data.accessKeyId !== '••••••••••••') {
-    toSave.push({ key: 'media.s3.accessKeyId', value: data.accessKeyId });
-  }
-
-  if (data.secretAccessKey && data.secretAccessKey !== '••••••••••••') {
-    toSave.push({ key: 'media.s3.secretAccessKey', value: data.secretAccessKey });
-  }
-
   for (const item of toSave) {
-    await db.insert(settings)
-      .values({ key: item.key, value: item.value })
-      .onConflictDoUpdate({
-        target: settings.key,
-        set: { value: item.value, updatedAt: new Date() }
-      });
+    const existing = await db.select().from(settings).where(eq(settings.key, item.key));
+    if (existing.length > 0) {
+      await db.update(settings).set({ value: item.value, updatedAt: new Date() }).where(eq(settings.key, item.key));
+    } else {
+      await db.insert(settings).values({ key: item.key, value: item.value });
+    }
   }
 
   return { success: true };
+}
+
+export async function getStoragePluginsAction() {
+  const pluginsDir = path.join(process.cwd(), 'src/plugins');
+  const storagePlugins: { label: string; value: string }[] = [];
+  
+  // Always include the default local storage
+  storagePlugins.push({ label: 'Local Storage (Default)', value: 'local' });
+
+  if (!fs.existsSync(pluginsDir)) {
+    return storagePlugins;
+  }
+
+  const pluginFolders = fs.readdirSync(pluginsDir, { withFileTypes: true })
+    .filter(dirent => dirent.isDirectory())
+    .map(dirent => dirent.name);
+
+  for (const folder of pluginFolders) {
+    const pluginJsonPath = path.join(pluginsDir, folder, 'plugin.json');
+    if (fs.existsSync(pluginJsonPath)) {
+      try {
+        const rawJson = fs.readFileSync(pluginJsonPath, 'utf-8');
+        const parsed = JSON.parse(rawJson);
+        if (parsed.category === 'Storage') {
+          if (parsed.providesDrivers && Array.isArray(parsed.providesDrivers)) {
+            parsed.providesDrivers.forEach((driver: {label: string, value: string}) => {
+              storagePlugins.push(driver);
+            });
+          } else {
+            let label = parsed.name || folder;
+            storagePlugins.push({
+              label: label,
+              value: folder.replace('plugin-', '')
+            });
+          }
+        }
+      } catch (e) {
+        console.warn(`Could not parse plugin.json for ${folder}`);
+      }
+    }
+  }
+
+  return storagePlugins;
 }

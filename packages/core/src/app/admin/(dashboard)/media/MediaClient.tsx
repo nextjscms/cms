@@ -19,7 +19,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { getMediaSettingsAction, saveMediaSettingsAction } from './actions';
+import { getMediaSettingsAction, saveMediaSettingsAction, getStoragePluginsAction } from './actions';
 import { toast } from 'sonner';
 
 export function MediaClient({ pickerMode = false, onSelect }: { pickerMode?: boolean, onSelect?: (media: any) => void }) {
@@ -156,13 +156,19 @@ export function MediaClient({ pickerMode = false, onSelect }: { pickerMode?: boo
     return () => observer.disconnect();
   }, [hasMore, loadMore]);
 
+  const [pluginOptions, setPluginOptions] = useState<{label: string, value: string}[]>([]);
+
   useEffect(() => {
-    getMediaSettingsAction().then(data => {
+    Promise.all([
+      getMediaSettingsAction(),
+      getStoragePluginsAction()
+    ]).then(([data, options]) => {
       const s3ApiUrl = data.endpoint ? data.endpoint : '';
       setSettings({
         ...data,
         s3ApiUrl
       });
+      setPluginOptions(options);
     }).catch(console.error);
   }, []);
 
@@ -389,7 +395,7 @@ export function MediaClient({ pickerMode = false, onSelect }: { pickerMode?: boo
           return;
         }
       }
-    } catch (_) {}
+    } catch (_) { }
 
     // Only allow desktop file drops on the table area
     if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
@@ -684,12 +690,12 @@ export function MediaClient({ pickerMode = false, onSelect }: { pickerMode?: boo
             {/* Upload progress counter */}
             {uploadingFiles.length > 0 && (
               <span className="text-[13px] text-blue-600 font-medium whitespace-nowrap">
-                {activeUploadIds.length > 0 
+                {activeUploadIds.length > 0
                   ? (() => {
-                      const maxActiveIndex = Math.max(...uploadingFiles.filter(u => activeUploadIds.includes(u.id)).map(u => u.originalIndex));
-                      const active = uploadingFiles.find(u => u.originalIndex === maxActiveIndex);
-                      return active ? `Uploading ${active.originalIndex}/${active.totalCount}` : `Uploading...`;
-                    })()
+                    const maxActiveIndex = Math.max(...uploadingFiles.filter(u => activeUploadIds.includes(u.id)).map(u => u.originalIndex));
+                    const active = uploadingFiles.find(u => u.originalIndex === maxActiveIndex);
+                    return active ? `Uploading ${active.originalIndex}/${active.totalCount}` : `Uploading...`;
+                  })()
                   : `Uploading...`}
               </span>
             )}
@@ -890,81 +896,81 @@ export function MediaClient({ pickerMode = false, onSelect }: { pickerMode?: boo
               {media.map(file => {
                 const isDeleting = deletingIds.includes(file.id);
                 return (
-                <TableRow
-                  key={`file-${file.id}`}
-                  className={`hover:bg-muted/30 transition-colors ${selectedIds.includes(file.id) ? 'bg-primary/5' : ''} ${isDeleting ? 'opacity-50 pointer-events-none' : ''}`}
-                >
-                  <TableCell className="px-4">
-                    <input type="checkbox" className="rounded border-gray-300 cursor-pointer"
-                      checked={selectedIds.includes(file.id)}
-                      onChange={(e) => toggleSelection(file.id, e as any)}
-                    />
-                  </TableCell>
-                  <TableCell>
-                    <div
-                      className="flex items-center gap-3 cursor-pointer group"
-                      draggable
-                      onDragStart={(e) => handleDragStartFile(e, file.id)}
-                      onClick={() => handleFileClick(file)}
-                    >
-                      <div className="w-8 h-8 shrink-0 bg-muted/30 rounded border overflow-hidden flex items-center justify-center">
-                        {file.mimeType.startsWith('image/') ? (
-                          <img src={(file.sizes as any)?.thumbnail || file.url} alt={file.altText || file.filename} className="w-full h-full object-cover" />
-                        ) : (
-                          <File className="w-4 h-4 text-muted-foreground" />
-                        )}
+                  <TableRow
+                    key={`file-${file.id}`}
+                    className={`hover:bg-muted/30 transition-colors ${selectedIds.includes(file.id) ? 'bg-primary/5' : ''} ${isDeleting ? 'opacity-50 pointer-events-none' : ''}`}
+                  >
+                    <TableCell className="px-4">
+                      <input type="checkbox" className="rounded border-gray-300 cursor-pointer"
+                        checked={selectedIds.includes(file.id)}
+                        onChange={(e) => toggleSelection(file.id, e as any)}
+                      />
+                    </TableCell>
+                    <TableCell>
+                      <div
+                        className="flex items-center gap-3 cursor-pointer group"
+                        draggable
+                        onDragStart={(e) => handleDragStartFile(e, file.id)}
+                        onClick={() => handleFileClick(file)}
+                      >
+                        <div className="w-8 h-8 shrink-0 bg-muted/30 rounded border overflow-hidden flex items-center justify-center">
+                          {file.mimeType.startsWith('image/') ? (
+                            <img src={(file.sizes as any)?.thumbnail || file.url} alt={file.altText || file.filename} className="w-full h-full object-cover" />
+                          ) : (
+                            <File className="w-4 h-4 text-muted-foreground" />
+                          )}
+                        </div>
+                        <span className="text-[14px] font-medium text-blue-600 group-hover:underline truncate">{file.filename}</span>
                       </div>
-                      <span className="text-[14px] font-medium text-blue-600 group-hover:underline truncate">{file.filename}</span>
-                    </div>
-                  </TableCell>
-                  <TableCell className="text-muted-foreground text-[13px] hidden sm:table-cell truncate">{file.mimeType}</TableCell>
-                  <TableCell className="text-muted-foreground text-[13px] hidden md:table-cell">Standard</TableCell>
-                  <TableCell className="text-muted-foreground text-[13px] hidden sm:table-cell whitespace-nowrap">{formatBytes(file.size)}</TableCell>
-                  <TableCell className="text-muted-foreground text-[13px] hidden lg:table-cell whitespace-nowrap">{new Date(file.createdAt).toLocaleString()}</TableCell>
-                  <TableCell>
-                    <DropdownMenu>
-                      <DropdownMenuTrigger className="h-8 w-8 inline-flex items-center justify-center rounded-md hover:bg-muted text-muted-foreground outline-none">
-                        <MoreVertical className="h-4 w-4" />
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end">
-                        <DropdownMenuItem onClick={() => handleFileClick(file)}>
-                          <Edit2 className="w-4 h-4 mr-2" /> Details
-                        </DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => handleDownloadFile(file)}>
-                          <Download className="w-4 h-4 mr-2" /> Download
-                        </DropdownMenuItem>
-                        <DropdownMenuItem className="text-red-600 focus:text-red-600 focus:bg-red-50" onClick={() => {
-                          toast('Are you sure you want to delete this file permanently?', {
-                            action: {
-                              label: 'Delete',
-                              onClick: async () => {
-                                setDeletingIds(prev => [...prev, file.id]);
-                                try {
-                                  const res = await fetch(`/api/media/${file.id}`, { method: 'DELETE' });
-                                  if (res.ok) {
-                                    toast.success('File deleted');
-                                    fetchMedia(currentFolderId, true);
-                                  } else {
-                                    toast.error('Failed to delete file');
+                    </TableCell>
+                    <TableCell className="text-muted-foreground text-[13px] hidden sm:table-cell truncate">{file.mimeType}</TableCell>
+                    <TableCell className="text-muted-foreground text-[13px] hidden md:table-cell">Standard</TableCell>
+                    <TableCell className="text-muted-foreground text-[13px] hidden sm:table-cell whitespace-nowrap">{formatBytes(file.size)}</TableCell>
+                    <TableCell className="text-muted-foreground text-[13px] hidden lg:table-cell whitespace-nowrap">{new Date(file.createdAt).toLocaleString()}</TableCell>
+                    <TableCell>
+                      <DropdownMenu>
+                        <DropdownMenuTrigger className="h-8 w-8 inline-flex items-center justify-center rounded-md hover:bg-muted text-muted-foreground outline-none">
+                          <MoreVertical className="h-4 w-4" />
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          <DropdownMenuItem onClick={() => handleFileClick(file)}>
+                            <Edit2 className="w-4 h-4 mr-2" /> Details
+                          </DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => handleDownloadFile(file)}>
+                            <Download className="w-4 h-4 mr-2" /> Download
+                          </DropdownMenuItem>
+                          <DropdownMenuItem className="text-red-600 focus:text-red-600 focus:bg-red-50" onClick={() => {
+                            toast('Are you sure you want to delete this file permanently?', {
+                              action: {
+                                label: 'Delete',
+                                onClick: async () => {
+                                  setDeletingIds(prev => [...prev, file.id]);
+                                  try {
+                                    const res = await fetch(`/api/media/${file.id}`, { method: 'DELETE' });
+                                    if (res.ok) {
+                                      toast.success('File deleted');
+                                      fetchMedia(currentFolderId, true);
+                                    } else {
+                                      toast.error('Failed to delete file');
+                                    }
+                                  } catch (e) {
+                                    toast.error('Error deleting file');
+                                  } finally {
+                                    setDeletingIds(prev => prev.filter(id => id !== file.id));
                                   }
-                                } catch (e) {
-                                  toast.error('Error deleting file');
-                                } finally {
-                                  setDeletingIds(prev => prev.filter(id => id !== file.id));
                                 }
-                              }
-                            },
-                            cancel: { label: 'Cancel', onClick: () => { } }
-                          });
-                        }}>
-                          <Trash2 className="w-4 h-4 mr-2" /> Delete
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-                  </TableCell>
-                </TableRow>
-              );
-            })}
+                              },
+                              cancel: { label: 'Cancel', onClick: () => { } }
+                            });
+                          }}>
+                            <Trash2 className="w-4 h-4 mr-2" /> Delete
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </TableCell>
+                  </TableRow>
+                );
+              })}
             </TableBody>
           </Table>
 
@@ -997,45 +1003,19 @@ export function MediaClient({ pickerMode = false, onSelect }: { pickerMode?: boo
             <CardContent className="space-y-4 max-h-[80vh] overflow-y-auto">
               <div className="space-y-4">
                 <div className="space-y-2">
-                  <label className="text-sm font-medium">S3 API URL</label>
-                  <Input
-                    value={settings.s3ApiUrl}
-                    onChange={e => setSettings({ ...settings, s3ApiUrl: e.target.value })}
-                    placeholder="e.g. https://<id>.r2.cloudflarestorage.com"
-                  />
-                  <p className="text-xs text-muted-foreground">The API endpoint (without bucket name).</p>
-                </div>
-                <div className="space-y-2">
-                  <label className="text-sm font-medium">Bucket Name</label>
-                  <Input
-                    value={settings.bucketName}
-                    onChange={e => setSettings({ ...settings, bucketName: e.target.value })}
-                    placeholder="my-bucket-name"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <label className="text-sm font-medium">Public Development URL</label>
-                  <Input
-                    value={settings.publicUrl}
-                    onChange={e => setSettings({ ...settings, publicUrl: e.target.value })}
-                    placeholder="e.g. https://pub-abcdef123.r2.dev"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <label className="text-sm font-medium">Access Key ID</label>
-                  <Input
-                    type="password"
-                    value={settings.accessKeyId}
-                    onChange={e => setSettings({ ...settings, accessKeyId: e.target.value })}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <label className="text-sm font-medium">Secret Access Key</label>
-                  <Input
-                    type="password"
-                    value={settings.secretAccessKey}
-                    onChange={e => setSettings({ ...settings, secretAccessKey: e.target.value })}
-                  />
+                  <label className="text-sm font-medium">Active Storage Driver</label>
+                  <select
+                    value={settings.driver || 'local'}
+                    onChange={e => setSettings({ ...settings, driver: e.target.value })}
+                    className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                  >
+                    {pluginOptions.map(opt => (
+                      <option key={opt.value} value={opt.value}>{opt.label}</option>
+                    ))}
+                  </select>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Select which storage adapter to use. If selecting a third-party driver, ensure its plugin is activated and configured in the Plugins dashboard.
+                  </p>
                 </div>
               </div>
 

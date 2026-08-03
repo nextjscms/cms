@@ -117,6 +117,7 @@ export const media = pgTable("media", {
   size: integer("size").notNull(),
   altText: text("alt_text"),
   sizes: jsonb("sizes"),
+  driver: text("driver"), // Tracks which storage adapter uploaded this (local, cloudinary, s3, etc)
   folderId: integer("folder_id").references(() => mediaFolders.id),
   authorId: integer("author_id").references(() => users.id),
   createdAt: timestamp("created_at").defaultNow().notNull(),

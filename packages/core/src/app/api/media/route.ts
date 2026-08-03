@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { auth } from '@/auth';
-import { getStorageAdapter } from '@/adapters/storage-registry';
+import { getStorageAdapter, getActiveStorageDriver } from '@/adapters/storage-registry';
 import { getDatabaseAdapter } from '@/lib/registry';
 import { media, mediaFolders } from '@/db/schema';
 import crypto from 'crypto';
@@ -42,7 +42,8 @@ export async function POST(req: Request) {
     const db = adapter.getDb(dbUrl);
 
     // Get storage adapter dynamically based on DB settings
-    const storageAdapter = await getStorageAdapter(db);
+    const activeDriver = await getActiveStorageDriver(db);
+    const storageAdapter = await getStorageAdapter(db, activeDriver);
 
     let primaryUrl: string;
     let primaryMimeType = mimeType;
@@ -102,6 +103,7 @@ export async function POST(req: Request) {
       size: primarySize,
       altText: altText || null,
       sizes: sizesJson,
+      driver: activeDriver,
       folderId: folderId,
     });
 
@@ -240,39 +242,31 @@ export async function DELETE(req: Request) {
     // Fetch media records to get their URLs
     const records = await db.select().from(media).where(inArray(media.id, ids));
 
-    const storageAdapter = await getStorageAdapter(db);
-
     // Delete from storage
-    const allUrlsToDelete = new Set<string>();
-    
     for (const record of records) {
-      if (record.url) allUrlsToDelete.add(record.url);
+      const driver = record.driver || undefined;
+      const storageAdapter = await getStorageAdapter(db, driver);
+
+      const urlsToDelete = new Set<string>();
+      if (record.url) urlsToDelete.add(record.url);
       if (record.sizes) {
         const sizes = record.sizes as Record<string, string>;
         Object.values(sizes).forEach(url => {
-          if (typeof url === 'string') allUrlsToDelete.add(url);
+          if (typeof url === 'string') urlsToDelete.add(url);
         });
       }
-    }
 
-    const urls = Array.from(allUrlsToDelete);
-    const chunkSize = 20;
-    
-    for (let i = 0; i < urls.length; i += chunkSize) {
-      const chunk = urls.slice(i, i + chunkSize);
-      await Promise.all(
-        chunk.map(async (url) => {
-          try {
-            const parts = url.split('/');
-            const key = parts.pop();
-            if (key) {
-              await storageAdapter.delete(key);
-            }
-          } catch (e) {
-            console.error(`Failed to delete file ${url} from storage`, e);
+      for (const url of Array.from(urlsToDelete)) {
+        try {
+          const parts = url.split('/');
+          const key = parts.pop();
+          if (key) {
+            await storageAdapter.delete(key);
           }
-        })
-      );
+        } catch (e) {
+          console.error(`Failed to delete file ${url} from storage`, e);
+        }
+      }
     }
 
     // Delete from database

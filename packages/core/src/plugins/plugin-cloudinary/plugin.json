@@ -1,0 +1,14 @@
+{
+  "name": "Cloudinary Storage",
+  "version": "1.0.0",
+  "description": "Upload media files directly to Cloudinary and serve them optimized.",
+  "author": "NextjsCMS Core",
+  "category": "Storage",
+  "imageUrl": "https://images.unsplash.com/photo-1544256718-3bcf237f3974?q=80&w=2000&auto=format&fit=crop",
+  "settingsSchema": [
+    { "key": "cloudName", "label": "Cloud Name", "type": "string", "required": true },
+    { "key": "apiKey", "label": "API Key", "type": "string", "required": true },
+    { "key": "apiSecret", "label": "API Secret", "type": "password", "required": true },
+    { "key": "folder", "label": "Cloudinary Folder (Optional)", "type": "string", "description": "Defaults to nextjscms" }
+  ]
+}

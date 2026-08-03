@@ -1,5 +1,5 @@
 import { S3Client, PutObjectCommand, DeleteObjectCommand } from "@aws-sdk/client-s3";
-import { StorageAdapter } from "./storage";
+import { StorageAdapter } from "../../adapters/storage";
 
 export interface S3Config {
   bucketName?: string;

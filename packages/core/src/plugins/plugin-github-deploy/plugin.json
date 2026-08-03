@@ -1,0 +1,13 @@
+{
+  "name": "GitHub Deploy",
+  "version": "1.0.0",
+  "description": "GitOps deployment plugin. Intercepts plugin installations and pushes them directly to your GitHub repository to trigger Vercel builds.",
+  "author": "NextjsCMS Core",
+  "category": "Deployment",
+  "imageUrl": "https://images.unsplash.com/photo-1618401471353-b98afee0b2eb?q=80&w=2000&auto=format&fit=crop",
+  "settingsSchema": [
+    { "key": "githubOwner", "label": "Repository Owner (e.g. your username)", "type": "string", "required": true, "description": "e.g. sopro" },
+    { "key": "githubRepo", "label": "Repository Name", "type": "string", "required": true, "description": "e.g. nextjscms" },
+    { "key": "branch", "label": "Branch", "type": "string", "required": false, "description": "e.g. main (default: main)" }
+  ]
+}

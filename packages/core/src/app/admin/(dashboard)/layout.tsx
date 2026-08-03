@@ -17,12 +17,53 @@ import { Toaster } from '@/components/ui/sonner';
 export const dynamic = 'force-dynamic';
 
 import { getDb } from '@/db';
-import { postTypes } from '@/db/schema';
+import fs from 'fs';
+import path from 'path';
+import { eq } from 'drizzle-orm';
+import { settings, postTypes } from '@/db/schema';
+import { PluginUIs } from '@/plugins/registry';
 
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {
   const isAdmin = await hasPermission('admin');
   const db = getDb();
   let customPostTypes = [];
+  
+  // Load active plugins for Admin Menus
+  let pluginMenus: { label: string, icon: string, route: string, slug: string }[] = [];
+  try {
+    const [activePluginsSetting] = await db.select().from(settings).where(eq(settings.key, 'activePlugins'));
+    const [hiddenPluginsSetting] = await db.select().from(settings).where(eq(settings.key, 'hiddenSidebarPlugins'));
+    let hiddenPlugins: string[] = [];
+    if (hiddenPluginsSetting?.value) {
+      try { hiddenPlugins = JSON.parse(hiddenPluginsSetting.value); } catch(e) {}
+    }
+
+    if (activePluginsSetting?.value) {
+      const activePlugins: string[] = JSON.parse(activePluginsSetting.value);
+      const pluginsDir = path.join(process.cwd(), 'src/plugins');
+      
+      for (const slug of activePlugins) {
+        if (hiddenPlugins.includes(slug)) continue;
+        const pluginJsonPath = path.join(pluginsDir, slug, 'plugin.json');
+        if (fs.existsSync(pluginJsonPath)) {
+          const rawJson = fs.readFileSync(pluginJsonPath, 'utf-8');
+          const parsed = JSON.parse(rawJson);
+          const hasAdminUI = !!PluginUIs[slug]?.AdminUI;
+          if (hasAdminUI) {
+            pluginMenus.push({
+              label: parsed.adminMenu?.label || parsed.name || slug,
+              icon: parsed.adminMenu?.icon || 'Puzzle',
+              route: `/admin/p/${slug}`,
+              slug,
+            });
+          }
+        }
+      }
+    }
+  } catch (e) {
+    console.error("Failed to load plugin admin menus", e);
+  }
+
   try {
     customPostTypes = await db.select().from(postTypes);
   } catch (error: any) {
@@ -91,6 +132,21 @@ export default async function AdminLayout({ children }: { children: React.ReactN
                 <Puzzle className="w-5 h-5" />
                 Plugins
               </SidebarLink>
+
+              {pluginMenus.length > 0 && (
+                <>
+                  <div className="pt-6 pb-2">
+                    <p className="px-3 text-xs font-semibold text-neutral-500 uppercase tracking-wider">Installed Plugins</p>
+                  </div>
+                  {pluginMenus.map(menu => (
+                    <SidebarLink key={menu.slug} href={menu.route} className="flex items-center gap-3 px-3 py-2 rounded-md hover:bg-neutral-800 hover:text-white transition-colors">
+                      <DynamicIcon name={menu.icon} className="w-5 h-5" />
+                      {menu.label}
+                    </SidebarLink>
+                  ))}
+                </>
+              )}
+
               <div className="pt-6 pb-2">
                 <p className="px-3 text-xs font-semibold text-neutral-500 uppercase tracking-wider">System</p>
               </div>

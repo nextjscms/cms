@@ -1,0 +1,20 @@
+{
+  "name": "Amazon S3 & Cloudflare R2",
+  "version": "1.0.0",
+  "description": "Securely upload media files directly to an S3-compatible storage bucket.",
+  "author": "NextjsCMS Core",
+  "category": "Storage",
+  "imageUrl": "https://images.unsplash.com/photo-1620288627223-53302f4e8c74?q=80&w=2000&auto=format&fit=crop",
+  "providesDrivers": [
+    { "value": "s3", "label": "Amazon S3" },
+    { "value": "r2", "label": "Cloudflare R2" }
+  ],
+  "settingsSchema": [
+    { "key": "bucketName", "label": "Bucket Name", "type": "string" },
+    { "key": "publicUrl", "label": "Public URL", "type": "string" },
+    { "key": "region", "label": "Region (e.g. auto)", "type": "string" },
+    { "key": "endpoint", "label": "Endpoint URL", "type": "string" },
+    { "key": "accessKeyId", "label": "Access Key ID", "type": "string" },
+    { "key": "secretAccessKey", "label": "Secret Access Key", "type": "password" }
+  ]
+}

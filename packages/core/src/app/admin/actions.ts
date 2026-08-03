@@ -8,6 +8,8 @@ import fs from 'fs';
 import path from 'path';
 import * as tar from 'tar';
 import { Readable } from 'stream';
+import { auth } from '@/auth';
+import { nextjscms } from '@/lib/hooks';
 
 export async function activateTheme(formData: FormData) {
   const slug = formData.get('themeSlug') as string;
@@ -93,6 +95,25 @@ export async function togglePlugin(slug: string, activate: boolean) {
     await db.insert(settings).values({ key: 'activePlugins', value: newValue });
   }
 
+  // Allow plugins to intercept plugin toggling (e.g., GitHub Deployment plugin)
+  const toggleInterceptor = await nextjscms.emit('togglePlugin', { slug, activate, handled: false });
+  if (toggleInterceptor && toggleInterceptor.handled) {
+    revalidatePath('/admin/plugins');
+    return { success: true };
+  }
+
+  // Regenerate plugin registry
+  const registryContent = `// @ts-nocheck
+// Auto-generated Plugin Registry
+// This file is dynamically overwritten when plugins are toggled in the admin dashboard.
+${activePlugins.map((s, i) => `import * as plugin${i} from './${s}';`).join('\n')}
+
+export const PluginUIs: Record<string, any> = {
+${activePlugins.map((s, i) => `  '${s}': plugin${i},`).join('\n')}
+};
+`;
+  fs.writeFileSync(path.join(process.cwd(), 'src/plugins/registry.ts'), registryContent);
+
   revalidatePath('/admin/plugins');
 }
 
@@ -106,6 +127,12 @@ export async function installPlugin(slug: string, downloadUrl: string, version?:
 
   if (!finalResponse.ok) {
     throw new Error(`Failed to download plugin tarball from API (${finalResponse.status}): ${finalResponse.statusText}`);
+  }
+
+  // Allow plugins to intercept plugin installation (e.g., GitHub Deployment plugin)
+  const installInterceptor = await nextjscms.emit('installPlugin', { slug, downloadUrl, version, finalResponse, handled: false });
+  if (installInterceptor && installInterceptor.handled) {
+    return { success: true };
   }
 
   const pluginsDir = path.join(process.cwd(), 'src/plugins', slug);
@@ -132,3 +159,101 @@ export async function installPlugin(slug: string, downloadUrl: string, version?:
   
   throw new Error('Empty response body');
 }
+
+export async function getPluginSettings(slug: string) {
+  const db = getDb();
+  const existing = await db.select().from(settings).where(eq(settings.key, `plugin:${slug}`));
+  
+  if (existing.length > 0 && existing[0].value) {
+    try {
+      const parsed = JSON.parse(existing[0].value);
+      for (const [k, v] of Object.entries(parsed)) {
+        if (typeof v === 'string' && v.length > 0 && (k.toLowerCase().includes('secret') || k.toLowerCase().includes('password'))) {
+          parsed[k] = '••••••••••••';
+        }
+      }
+      return parsed;
+    } catch (e) {
+      return {};
+    }
+  }
+  return {};
+}
+
+export async function savePluginSettings(slug: string, data: Record<string, any>) {
+  const session = await auth();
+  if (!session || !session.user) {
+    throw new Error('Unauthorized');
+  }
+
+  const db = getDb();
+  const key = `plugin:${slug}`;
+
+  const existingRows = await db.select().from(settings).where(eq(settings.key, key));
+  let existingObj: Record<string, any> = {};
+  if (existingRows.length > 0 && existingRows[0].value) {
+    try { existingObj = JSON.parse(existingRows[0].value); } catch(e) {}
+  }
+
+  const newObj = { ...existingObj };
+  
+  for (const [k, v] of Object.entries(data)) {
+    if (v === '••••••••••••') {
+      continue;
+    }
+    newObj[k] = v;
+  }
+
+  const newValue = JSON.stringify(newObj);
+
+  if (existingRows.length > 0) {
+    await db.update(settings).set({ value: newValue }).where(eq(settings.key, key));
+  } else {
+    await db.insert(settings).values({ key, value: newValue });
+  }
+}
+
+export async function getHiddenSidebarPlugins(): Promise<string[]> {
+  const db = getDb();
+  const existingRows = await db.select().from(settings).where(eq(settings.key, 'hiddenSidebarPlugins'));
+  if (existingRows.length > 0 && existingRows[0].value) {
+    try {
+      return JSON.parse(existingRows[0].value);
+    } catch (e) {
+      return [];
+    }
+  }
+  return [];
+}
+
+export async function toggleSidebarVisibility(slug: string, isHidden: boolean) {
+  const session = await auth();
+  if (!session || !session.user) {
+    throw new Error('Unauthorized');
+  }
+
+  const db = getDb();
+  const existingRows = await db.select().from(settings).where(eq(settings.key, 'hiddenSidebarPlugins'));
+  
+  let hiddenPlugins: string[] = [];
+  if (existingRows.length > 0 && existingRows[0].value) {
+    try { hiddenPlugins = JSON.parse(existingRows[0].value); } catch(e) {}
+  }
+
+  if (isHidden) {
+    if (!hiddenPlugins.includes(slug)) hiddenPlugins.push(slug);
+  } else {
+    hiddenPlugins = hiddenPlugins.filter(p => p !== slug);
+  }
+
+  const newValue = JSON.stringify(hiddenPlugins);
+
+  if (existingRows.length > 0) {
+    await db.update(settings).set({ value: newValue }).where(eq(settings.key, 'hiddenSidebarPlugins'));
+  } else {
+    await db.insert(settings).values({ key: 'hiddenSidebarPlugins', value: newValue });
+  }
+
+  revalidatePath('/admin');
+}
+

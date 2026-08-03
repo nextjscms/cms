@@ -13,6 +13,7 @@ type PluginInfo = {
   description?: string;
   category?: string;
   imageUrl?: string;
+  settingsSchema?: { key: string; label: string; type: string }[];
 };
 
 export default async function PluginsPage() {

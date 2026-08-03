@@ -178,7 +178,7 @@ export default function MarketplaceClient({ localThemes, activeThemeSlug }: Mark
               const hasUpdate = remoteCounterpart && remoteCounterpart.version && theme.version && isVersionGreater(remoteCounterpart.version, theme.version);
 
               return (
-                <Card key={theme.slug} size="sm" className={`pt-0 h-full overflow-hidden transition-all border-transparent ${isActive ? 'shadow-lg shadow-emerald-500/20' : 'hover:shadow-md'}`}>
+                <Card key={theme.slug} size="sm" className={`pt-0 h-full overflow-hidden transition-all bordered`}>
                   <div className="h-32 shrink-0 bg-slate-50 flex items-center justify-center border-b border-slate-100 overflow-hidden relative">
                     {theme.imageUrl ? (
                       <img src={theme.imageUrl} alt={theme.name} className="object-cover w-full h-full" />
@@ -260,7 +260,7 @@ export default function MarketplaceClient({ localThemes, activeThemeSlug }: Mark
             {/* Render Marketplace Themes */}
             {filteredMarketplace.map(theme => {
               return (
-                <Card key={theme.id} size="sm" className="pt-0 h-full overflow-hidden transition-all border-transparent hover:shadow-md">
+                <Card key={theme.id} size="sm" className="pt-0 h-full overflow-hidden transition-all bordered">
                   <div className="h-32 shrink-0 bg-slate-900 flex items-center justify-center border-b border-slate-800 overflow-hidden relative">
                     {theme.imageUrl ? (
                       <img src={theme.imageUrl} alt={theme.name} className="object-cover w-full h-full" />

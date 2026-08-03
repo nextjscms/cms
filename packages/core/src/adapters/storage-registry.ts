@@ -1,59 +1,46 @@
 import { StorageAdapter } from './storage';
 import { LocalStorageAdapter } from './local';
-import { S3StorageAdapter, S3Config } from './s3';
 import { settings } from '@/db/schema';
-import { eq, inArray } from 'drizzle-orm';
+import { eq } from 'drizzle-orm';
+import { nextjscms } from '@/lib/hooks';
 
-/**
- * Factory function to retrieve the configured Storage Adapter.
- * It reads the `settings` table to determine the active storage driver and its configuration.
- * 
- * @param db The database instance
- * @returns An initialized StorageAdapter
- */
-export async function getStorageAdapter(db: any): Promise<StorageAdapter> {
-  let activeDriver = 's3';
-  let s3Config: S3Config = {};
-
+export async function getActiveStorageDriver(db: any): Promise<string> {
+  let activeDriver = 'local';
   try {
     const activeSetting = await db.select().from(settings).where(eq(settings.key, 'media.storage.driver'));
     if (activeSetting.length > 0 && activeSetting[0].value) {
       activeDriver = activeSetting[0].value;
     }
-
-    if (activeDriver === 's3' || activeDriver === 'r2') {
-      const configKeys = [
-        'media.s3.bucketName',
-        'media.s3.publicUrl',
-        'media.s3.region',
-        'media.s3.endpoint',
-        'media.s3.accessKeyId',
-        'media.s3.secretAccessKey'
-      ];
-      
-      const configRows = await db.select().from(settings).where(inArray(settings.key, configKeys));
-      
-      const configMap: Record<string, string> = {};
-      configRows.forEach((row: any) => {
-        configMap[row.key] = row.value || '';
-      });
-
-      s3Config = {
-        bucketName: configMap['media.s3.bucketName'],
-        publicUrl: configMap['media.s3.publicUrl'],
-        region: configMap['media.s3.region'],
-        endpoint: configMap['media.s3.endpoint'],
-        accessKeyId: configMap['media.s3.accessKeyId'],
-        secretAccessKey: configMap['media.s3.secretAccessKey'],
-      };
-    }
   } catch (error) {
-    console.warn("Could not load storage settings from DB, falling back to process.env defaults.");
+    console.warn("Could not load storage settings from DB, falling back to local.");
+  }
+  return activeDriver;
+}
+
+/**
+ * Factory function to retrieve the configured Storage Adapter.
+ * It reads the `settings` table to determine the active storage driver.
+ * It then asks registered plugins to provide the adapter.
+ * 
+ * @param db The database instance
+ * @param overrideDriver If provided, use this driver instead of the global active setting
+ * @returns An initialized StorageAdapter
+ */
+export async function getStorageAdapter(db: any, overrideDriver?: string): Promise<StorageAdapter> {
+  let activeDriver = overrideDriver;
+  
+  if (!activeDriver) {
+    activeDriver = await getActiveStorageDriver(db);
   }
 
-  if (activeDriver === 's3' || activeDriver === 'r2') {
-    return new S3StorageAdapter(s3Config);
+  // Allow plugins to intercept and provide the StorageAdapter based on the active driver
+  const pluginAdapter = await nextjscms.emit('getStorageAdapter', { driver: activeDriver, db });
+  
+  // If a plugin returned a valid adapter, use it!
+  if (pluginAdapter && pluginAdapter.upload) {
+    return pluginAdapter as StorageAdapter;
   }
 
+  // Fallback to local storage
   return new LocalStorageAdapter();
 }

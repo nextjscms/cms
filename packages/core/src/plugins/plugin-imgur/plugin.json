@@ -1,0 +1,11 @@
+{
+  "name": "Imgur Storage",
+  "version": "1.0.0",
+  "description": "Upload media files completely free to Imgur (Note: Deleting files from CMS will not delete them from Imgur).",
+  "author": "NextjsCMS Core",
+  "category": "Storage",
+  "imageUrl": "https://images.unsplash.com/photo-1544256718-3bcf237f3974?q=80&w=2000&auto=format&fit=crop",
+  "settingsSchema": [
+    { "key": "clientId", "label": "Imgur Client ID", "type": "string", "required": true, "description": "You can get a free Client ID from api.imgur.com" }
+  ]
+}

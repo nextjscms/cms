@@ -38,3 +38,10 @@ class HookRegistry {
 
 // Export a global singleton for the entire CMS to use
 export const nextjscms = new HookRegistry();
+
+// Boot up all active plugins registered by the CMS
+// We use require() instead of import to prevent ESM hoisting. 
+// This ensures `nextjscms` is fully initialized BEFORE the plugins try to import it.
+if (typeof window === 'undefined') {
+  require('../plugins/registry');
+}
