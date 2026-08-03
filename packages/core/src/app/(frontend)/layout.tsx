@@ -4,6 +4,7 @@ import { settings, menus, menuItems } from '@/db/schema';
 import { eq } from 'drizzle-orm';
 import { getThemeComponent } from '@/themes/registry';
 import CustomizerPreviewSync from '@/components/CustomizerPreviewSync';
+import { hasExistingUsers } from '@/app/admin/setup/setup-actions';
 import fs from 'fs';
 import path from 'path';
 import "../frontend.css";
@@ -16,12 +17,17 @@ export default async function FrontendLayout({ children }: { children: React.Rea
   // 1. Fetch active theme from settings
   let activeTheme = 'default';
   try {
+    const usersExist = await hasExistingUsers();
+    if (!usersExist) {
+      redirect('/admin/setup');
+    }
+
     const [activeThemeSetting] = await db.select().from(settings).where(eq(settings.key, 'activeTheme'));
     activeTheme = activeThemeSetting?.value || 'default';
   } catch (error: any) {
     if (error.message?.includes('relation "settings" does not exist') || error.message?.includes('does not exist')) {
       console.error("Database tables missing on frontend. Redirecting to setup.");
-      redirect('/setup');
+      redirect('/admin/setup');
     }
     throw error;
   }
