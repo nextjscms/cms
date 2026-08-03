@@ -9,7 +9,7 @@ export const dbAdapter = getDatabaseAdapter();
 
 // Helper to get the underlying query builder
 export function getDb() {
-  const dbUrl = process.env.DATABASE_URL;
+  const dbUrl = process.env.DATABASE_URL || process.env.POSTGRES_URL;
   if (!dbUrl) {
     redirect('/setup');
   }
