@@ -76,9 +76,9 @@ export default function AutoInstallerSettings({ initialOwner, initialRepo, hasTo
         </div>
       </CardContent>
       <CardFooter>
-        <Button onClick={handleConnectGithub} className={hasToken ? "bg-slate-700 hover:bg-slate-800" : "bg-slate-900 hover:bg-slate-800"} disabled={loading}>
-          {loading ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <GitBranch className="w-4 h-4 mr-2" />}
-          {hasToken ? 'Reconnect to GitHub' : 'Connect to GitHub'}
+        <Button onClick={handleConnectGithub} className={hasToken ? "bg-green-600 hover:bg-green-700 text-white" : "bg-slate-900 hover:bg-slate-800"} disabled={loading}>
+          {loading ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : (hasToken ? <CheckCircle2 className="w-4 h-4 mr-2" /> : <GitBranch className="w-4 h-4 mr-2" />)}
+          {hasToken ? 'Connected to GitHub' : 'Connect to GitHub'}
         </Button>
       </CardFooter>
     </Card>
