@@ -31,13 +31,18 @@ export default async function PluginsPage() {
   // 2. Scan the file system for plugins
   const pluginsDir = path.join(process.cwd(), 'src/plugins');
   
-  if (!fs.existsSync(pluginsDir)) {
-    fs.mkdirSync(pluginsDir, { recursive: true });
-  }
+  let pluginFolders: string[] = [];
+  try {
+    if (!fs.existsSync(pluginsDir)) {
+      fs.mkdirSync(pluginsDir, { recursive: true });
+    }
 
-  const pluginFolders = fs.readdirSync(pluginsDir, { withFileTypes: true })
-    .filter(dirent => dirent.isDirectory())
-    .map(dirent => dirent.name);
+    pluginFolders = fs.readdirSync(pluginsDir, { withFileTypes: true })
+      .filter(dirent => dirent.isDirectory())
+      .map(dirent => dirent.name);
+  } catch (e) {
+    console.warn('Could not read or create plugins directory', e);
+  }
 
   // 3. Read plugin.json for each discovered folder
   const availablePlugins: PluginInfo[] = pluginFolders.map(folderName => {

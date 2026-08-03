@@ -59,16 +59,20 @@ export default async function AdminLayout({ children }: { children: React.ReactN
         if (hiddenPlugins.includes(slug)) continue;
         const pluginJsonPath = path.join(pluginsDir, slug, 'plugin.json');
         if (fs.existsSync(pluginJsonPath)) {
-          const rawJson = fs.readFileSync(pluginJsonPath, 'utf-8');
-          const parsed = JSON.parse(rawJson);
-          const hasAdminUI = !!PluginUIs[slug]?.AdminUI;
-          if (hasAdminUI) {
-            pluginMenus.push({
-              label: parsed.adminMenu?.label || parsed.name || slug,
-              icon: parsed.adminMenu?.icon || 'Puzzle',
-              route: `/admin/p/${slug}`,
-              slug,
-            });
+          try {
+            const rawJson = fs.readFileSync(pluginJsonPath, 'utf-8');
+            const parsed = JSON.parse(rawJson);
+            const hasAdminUI = !!PluginUIs[slug]?.AdminUI;
+            if (hasAdminUI) {
+              pluginMenus.push({
+                label: parsed.adminMenu?.label || parsed.name || slug,
+                icon: parsed.adminMenu?.icon || 'Puzzle',
+                route: `/admin/p/${slug}`,
+                slug,
+              });
+            }
+          } catch (e) {
+            console.error(`Failed to parse plugin.json for ${slug}`, e);
           }
         }
       }
