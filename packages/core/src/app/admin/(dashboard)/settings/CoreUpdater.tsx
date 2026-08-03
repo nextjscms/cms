@@ -112,10 +112,8 @@ export default function CoreUpdater({ currentVersion }: CoreUpdaterProps) {
             
             {isUpdateAvailable && releaseNotes && (
               <Dialog>
-                <DialogTrigger asChild>
-                  <Button variant="outline" size="sm" className="w-full text-slate-600">
-                    View Release Notes
-                  </Button>
+                <DialogTrigger render={<Button variant="outline" size="sm" className="w-full text-slate-600" />}>
+                  View Release Notes
                 </DialogTrigger>
                 <DialogContent className="sm:max-w-[600px]">
                   <DialogHeader>
