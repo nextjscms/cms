@@ -5,7 +5,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter }
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
-import { Loader2, Github, CheckCircle2 } from 'lucide-react';
+import { Loader2, GitBranch, CheckCircle2 } from 'lucide-react';
 import { saveGitOpsToken } from '@/app/admin/setup/setup-actions';
 import { useSearchParams } from 'next/navigation';
 
@@ -77,7 +77,7 @@ export default function AutoInstallerSettings({ initialOwner, initialRepo, hasTo
       </CardContent>
       <CardFooter>
         <Button onClick={handleConnectGithub} className={hasToken ? "bg-slate-700 hover:bg-slate-800" : "bg-slate-900 hover:bg-slate-800"} disabled={loading}>
-          {loading ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Github className="w-4 h-4 mr-2" />}
+          {loading ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <GitBranch className="w-4 h-4 mr-2" />}
           {hasToken ? 'Reconnect to GitHub' : 'Connect to GitHub'}
         </Button>
       </CardFooter>

@@ -6,7 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter }
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
-import { Loader2, Settings, Github, CheckCircle2 } from 'lucide-react';
+import { Loader2, Settings, GitBranch, CheckCircle2 } from 'lucide-react';
 import { createFirstAdmin, saveGitOpsToken } from './setup-actions';
 
 export default function SetupClient({ 
@@ -168,7 +168,7 @@ export default function SetupClient({
                   </Button>
                 ) : (
                   <Button onClick={handleConnectGithub} className="w-full h-11 bg-slate-900 hover:bg-slate-800" disabled={loading}>
-                    <Github className="w-4 h-4 mr-2" /> Connect to GitHub
+                    <GitBranch className="w-4 h-4 mr-2" /> Connect to GitHub
                   </Button>
                 )}
               </div>

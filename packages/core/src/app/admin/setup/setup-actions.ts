@@ -3,7 +3,6 @@
 import { getDb } from '@/db';
 import { users, settings } from '@/db/schema';
 import { eq } from 'drizzle-orm';
-import { hash } from 'bcryptjs';
 import { revalidatePath } from 'next/cache';
 
 export async function hasExistingUsers() {
@@ -28,7 +27,9 @@ export async function createFirstAdmin(formData: FormData) {
     throw new Error('An admin user already exists. Setup cannot continue.');
   }
 
-  const hashedPassword = await hash(password, 10);
+  // Hash the provided password using the same Web Crypto API as auth.ts
+  const hashBuffer = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(password));
+  const hashedPassword = Array.from(new Uint8Array(hashBuffer)).map(b => b.toString(16).padStart(2, '0')).join('');
 
   await db.insert(users).values({
     name,
