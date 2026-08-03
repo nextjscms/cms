@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { savePluginSettings, getPluginSettings } from '@/app/admin/actions';
+import { savePluginSettings, getPluginSettings } from '@/app/admin/settings-actions';
 
 export default function GithubDeployUI() {
   const router = useRouter();
@@ -25,7 +25,7 @@ export default function GithubDeployUI() {
           setToken(incomingToken);
           setStatus('Connected successfully!');
           // Remove token from URL
-          router.replace('/admin/plugins/plugin-github-deploy/settings');
+          router.replace('/admin/settings/plugins/plugin-github-deploy');
         });
       });
     } else {
@@ -42,7 +42,7 @@ export default function GithubDeployUI() {
   }, [searchParams, router]);
 
   const handleConnect = () => {
-    const returnUrl = window.location.origin + '/admin/plugins/plugin-github-deploy/settings';
+    const returnUrl = window.location.origin + '/admin/settings/plugins/plugin-github-deploy';
     // Use marketplace API as proxy
     const proxyUrl = process.env.NEXT_PUBLIC_MARKETPLACE_API_URL || 'https://nextjscms-api.vercel.app';
     window.location.href = `${proxyUrl}/api/auth/github/authorize?return_url=${encodeURIComponent(returnUrl)}`;

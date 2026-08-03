@@ -211,7 +211,7 @@ ${activePlugins.map((s, i) => `  '${s}': plugin${i},`).join('\n')}
   });
 }
 
-// We export the custom UI for the OAuth flow
-export default function GithubDeployPlugin() {
-  return <GithubDeployUI />;
-}
+export const AdminUI = GithubDeployUI;
+export const SettingsUI = GithubDeployUI;
+
+export default GithubDeployUI;

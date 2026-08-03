@@ -3,7 +3,8 @@ import path from 'path';
 import { Card, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import PluginSettingsForm from './PluginSettingsForm';
 import SidebarVisibilityToggle from './SidebarVisibilityToggle';
-import { getPluginSettings, getHiddenSidebarPlugins } from '@/app/admin/actions';
+import { getHiddenSidebarPlugins } from '@/app/admin/actions';
+import { getPluginSettings } from '@/app/admin/settings-actions';
 import { PluginUIs } from '@/plugins/registry';
 
 export default async function PluginSettingsPage({ params }: { params: Promise<{ slug: string }> }) {
@@ -44,6 +45,7 @@ export default async function PluginSettingsPage({ params }: { params: Promise<{
 
   // Load existing settings
   const existingSettings = await getPluginSettings(slug);
+  const SettingsUI = PluginUIs[slug]?.SettingsUI;
 
   return (
     <Card>
@@ -55,11 +57,19 @@ export default async function PluginSettingsPage({ params }: { params: Promise<{
         {hasAdminUI && <SidebarVisibilityToggle slug={slug} initialHidden={isHidden} />}
       </CardHeader>
 
-      <PluginSettingsForm
-        slug={slug}
-        schema={parsed.settingsSchema}
-        initialData={existingSettings}
-      />
+      {SettingsUI && (
+        <div className="p-6 border-b">
+          <SettingsUI />
+        </div>
+      )}
+
+      {parsed.settingsSchema && parsed.settingsSchema.length > 0 && (
+        <PluginSettingsForm
+          slug={slug}
+          schema={parsed.settingsSchema}
+          initialData={existingSettings}
+        />
+      )}
     </Card>
   );
 }
