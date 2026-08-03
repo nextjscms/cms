@@ -15,7 +15,22 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       async authorize(credentials) {
         if (!credentials?.email || !credentials?.password) return null;
         
-        const user = await dbAdapter.getUserByEmail(credentials.email as string);
+        const loginId = credentials.email as string;
+        
+        // Try getting user by email first
+        let user = await dbAdapter.getUserByEmail(loginId);
+        
+        // If not found by email, try querying by name
+        if (!user) {
+          const { getDb } = await import('@/db');
+          const { users } = await import('@/db/schema');
+          const { eq } = await import('drizzle-orm');
+          const db = getDb();
+          const nameMatches = await db.select().from(users).where(eq(users.name, loginId)).limit(1);
+          if (nameMatches.length > 0) {
+            user = nameMatches[0] as any;
+          }
+        }
         
         if (!user) return null;
         

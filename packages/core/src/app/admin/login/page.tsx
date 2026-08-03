@@ -64,13 +64,15 @@ export default function LoginPage() {
         <CardContent className="pt-8 pb-6 px-8">
           <form onSubmit={handleSubmit} className="space-y-6">
             <div className="space-y-2">
-              <Label htmlFor="email">Email Address</Label>
+              <Label htmlFor="email">Email Address or Username</Label>
               <Input
                 id="email"
                 name="email"
-                type="email"
-                placeholder="admin@example.com"
+                type="text"
+                placeholder="admin@example.com or admin"
                 required
+                autoCapitalize="none"
+                autoCorrect="off"
                 className="h-11"
               />
             </div>
