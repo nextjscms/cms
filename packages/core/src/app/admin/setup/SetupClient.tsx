@@ -23,6 +23,7 @@ export default function SetupClient({
   const [step, setStep] = useState(initialStep);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved'>('idle');
 
   // Step 2 specific states
   const [githubOwner, setGithubOwner] = useState(defaultOwner);
@@ -30,23 +31,29 @@ export default function SetupClient({
 
   useEffect(() => {
     const token = searchParams.get('github_token');
-    if (token && step === 2) {
+    if (token && step === 2 && saveStatus === 'idle') {
       setLoading(true);
+      setSaveStatus('saving');
       // Auto-save the token if we have repo/owner
       if (githubOwner && githubRepo) {
         saveGitOpsToken(token, githubOwner, githubRepo).then(() => {
-          setStep(3);
-          setLoading(false);
+          setSaveStatus('saved');
+          setTimeout(() => {
+            setStep(3);
+            setLoading(false);
+          }, 2000);
         }).catch(e => {
           setError(e.message);
           setLoading(false);
+          setSaveStatus('idle');
         });
       } else {
         // If they don't have defaults, they need to fill them in before saving
         setLoading(false);
+        setSaveStatus('idle');
       }
     }
-  }, [searchParams, step, githubOwner, githubRepo]);
+  }, [searchParams, step, githubOwner, githubRepo, saveStatus]);
 
   const handleCreateAdmin = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -69,6 +76,7 @@ export default function SetupClient({
       setError('Please enter your GitHub username/org and repository name');
       return;
     }
+    setLoading(true);
     const returnUrl = window.location.origin + '/admin/setup';
     const proxyUrl = process.env.NEXT_PUBLIC_MARKETPLACE_API_URL || 'https://nextjscms-api.vercel.app';
     window.location.href = `${proxyUrl}/api/auth/github/authorize?return_url=${encodeURIComponent(returnUrl)}`;
@@ -79,14 +87,19 @@ export default function SetupClient({
     if (!token) return;
     
     setLoading(true);
+    setSaveStatus('saving');
     setError('');
     try {
       await saveGitOpsToken(token, githubOwner, githubRepo);
-      setStep(3);
+      setSaveStatus('saved');
+      setTimeout(() => {
+        setStep(3);
+        setLoading(false);
+      }, 2000);
     } catch(e: any) {
       setError(e.message);
-    } finally {
       setLoading(false);
+      setSaveStatus('idle');
     }
   }
 
@@ -154,6 +167,7 @@ export default function SetupClient({
                         onChange={e => setGithubOwner(e.target.value)} 
                         placeholder="e.g. your-username" 
                         required
+                        disabled={loading || saveStatus === 'saved'}
                       />
                     </div>
                     <div className="space-y-2">
@@ -163,19 +177,41 @@ export default function SetupClient({
                         onChange={e => setGithubRepo(e.target.value)} 
                         placeholder="e.g. nextjscms-site" 
                         required
+                        disabled={loading || saveStatus === 'saved'}
                       />
                     </div>
                   </div>
                 )}
 
                 {searchParams.get('github_token') ? (
-                  <Button onClick={handleSaveGithubSettings} className="w-full h-11 bg-green-600 hover:bg-green-700" disabled={loading}>
-                    {loading ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <CheckCircle2 className="w-4 h-4 mr-2" />}
-                    Save Configuration
+                  <Button 
+                    onClick={handleSaveGithubSettings} 
+                    className={`w-full h-11 transition-all ${saveStatus === 'saved' ? 'bg-green-600 hover:bg-green-700' : 'bg-slate-900 hover:bg-slate-800'}`} 
+                    disabled={loading || saveStatus === 'saved'}
+                  >
+                    {saveStatus === 'saved' ? (
+                      <CheckCircle2 className="w-4 h-4 mr-2" />
+                    ) : loading ? (
+                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                    ) : (
+                      <CheckCircle2 className="w-4 h-4 mr-2" />
+                    )}
+                    {saveStatus === 'saved' ? 'Connected!' : 'Save Configuration'}
                   </Button>
                 ) : (
-                  <Button onClick={handleConnectGithub} className="w-full h-11 bg-slate-900 hover:bg-slate-800" disabled={loading}>
-                    <GitBranch className="w-4 h-4 mr-2" /> Connect to GitHub
+                  <Button 
+                    onClick={handleConnectGithub} 
+                    className={`w-full h-11 transition-all ${saveStatus === 'saved' ? 'bg-green-600 hover:bg-green-700' : 'bg-slate-900 hover:bg-slate-800'}`} 
+                    disabled={loading || saveStatus === 'saved'}
+                  >
+                    {saveStatus === 'saved' ? (
+                      <CheckCircle2 className="w-4 h-4 mr-2" />
+                    ) : loading ? (
+                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                    ) : (
+                      <GitBranch className="w-4 h-4 mr-2" />
+                    )}
+                    {saveStatus === 'saved' ? 'Connected!' : (loading ? 'Connecting...' : 'Connect to GitHub')}
                   </Button>
                 )}
               </div>
@@ -183,7 +219,7 @@ export default function SetupClient({
           )}
 
           {step === 3 && (
-            <div className="text-center space-y-6 py-4">
+            <div className="text-center space-y-6 py-4 animate-in fade-in zoom-in duration-500">
               <div className="mx-auto bg-green-100 p-4 rounded-full w-20 h-20 flex items-center justify-center">
                 <CheckCircle2 className="w-10 h-10 text-green-600" />
               </div>

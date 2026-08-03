@@ -9,7 +9,8 @@ export async function getGitOpsSettings() {
     if (settingsRows.length === 0 || !settingsRows[0].value) return null;
     return JSON.parse(settingsRows[0].value);
   } catch (error: any) {
-    if (error.message?.includes('relation "settings" does not exist') || error.message?.includes('does not exist')) {
+    const errorStr = error.message + ' ' + (error.cause ? String(error.cause) : '');
+    if (errorStr.includes('relation "settings" does not exist') || errorStr.includes('does not exist')) {
       return null;
     }
     return null;
@@ -24,6 +25,7 @@ async function githubApi(endpoint: string, options: RequestInit, token: string) 
       'Authorization': `Bearer ${token}`,
       'Accept': 'application/vnd.github.v3+json',
       'X-GitHub-Api-Version': '2022-11-28',
+      'User-Agent': 'NextjsCMS-GitOps',
       ...options.headers,
     },
   });

@@ -11,7 +11,8 @@ export async function hasExistingUsers() {
     const existingUsers = await db.select().from(users).limit(1);
     return existingUsers.length > 0;
   } catch (error: any) {
-    if (error.message?.includes('relation "users" does not exist') || error.message?.includes('does not exist')) {
+    const errorStr = error.message + ' ' + (error.cause ? String(error.cause) : '');
+    if (errorStr.includes('relation "users" does not exist') || errorStr.includes('does not exist')) {
       return false;
     }
     throw error;
