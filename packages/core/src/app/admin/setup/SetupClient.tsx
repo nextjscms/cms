@@ -135,8 +135,9 @@ export default function SetupClient({
 
           {step === 2 && (
             <div className="space-y-6">
-              <div className="bg-blue-50 border border-blue-100 text-blue-800 p-4 rounded-lg text-sm">
-                <strong>Almost done!</strong> To install themes and plugins, NextjsCMS needs to link to your GitHub repository to securely push code updates.
+              <div className="bg-blue-50 border border-blue-100 text-blue-800 p-4 rounded-lg text-sm space-y-2">
+                <p><strong>Almost done!</strong> To install themes and plugins, NextjsCMS needs to link to your GitHub repository to securely push code updates via native GitOps.</p>
+                <p><strong>Required Permissions:</strong> We require basic repository access to commit code back to your repository. We will request a secure OAuth access token which will be encrypted in your database.</p>
               </div>
               
               <div className="space-y-4">

@@ -24,10 +24,16 @@ import { settings, postTypes } from '@/db/schema';
 import { PluginUIs } from '@/plugins/registry';
 
 import { hasExistingUsers } from '@/app/admin/setup/setup-actions';
+import { getGitOpsSettings } from '@/lib/gitops';
 
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {
   const usersExist = await hasExistingUsers();
   if (!usersExist) {
+    redirect('/admin/setup');
+  }
+
+  const gitOps = await getGitOpsSettings();
+  if (!gitOps || !gitOps.githubToken) {
     redirect('/admin/setup');
   }
 
