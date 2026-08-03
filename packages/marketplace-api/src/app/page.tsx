@@ -55,7 +55,7 @@ export default function Home() {
 
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4 pt-8">
             <a
-              href="https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Fnextjscms%2Fcms&root-directory=packages%2Fcore&env=DATABASE_URL&envDescription=Please%20provide%20a%20Postgres%20database%20URL.%20You%20can%20create%20one%20using%20Vercel%20Storage.&stores=%5B%7B%22type%22%3A%22postgres%22%7D%5D"
+              href="https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Fnextjscms%2Fcms&root-directory=packages%2Fcore"
               target="_blank"
               rel="noopener noreferrer"
               className="flex h-12 items-center justify-center gap-2 rounded-md bg-white px-8 text-base font-semibold text-black transition-all hover:bg-gray-200 hover:scale-[1.02] active:scale-[0.98] w-full sm:w-auto"
