@@ -7,7 +7,8 @@ import { Input } from '@/components/ui/input';
 import { Search, Download, CheckCircle, ExternalLink, Loader2, Package, Puzzle, CheckCircle2, Clock, Settings } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { toast } from 'sonner';
-import { installPlugin, togglePlugin, getPluginSettings, savePluginSettings } from '@/app/admin/actions';
+import { installPlugin, togglePlugin } from '@/app/admin/actions';
+import { getPluginSettings, savePluginSettings } from '@/app/admin/settings-actions';
 import {
   Dialog,
   DialogContent,
