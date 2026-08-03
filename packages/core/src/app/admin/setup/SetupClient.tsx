@@ -140,26 +140,32 @@ export default function SetupClient({
               </div>
               
               <div className="space-y-4">
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label>GitHub Owner / Org</Label>
-                    <Input 
-                      value={githubOwner} 
-                      onChange={e => setGithubOwner(e.target.value)} 
-                      placeholder="e.g. your-username" 
-                      required
-                    />
+                {defaultOwner && defaultRepo ? (
+                  <div className="bg-slate-50 border border-slate-200 text-slate-800 p-4 rounded-lg text-sm">
+                    <strong>Vercel Detected:</strong> We've automatically linked your setup to the GitHub repository <strong>{defaultOwner}/{defaultRepo}</strong>.
                   </div>
-                  <div className="space-y-2">
-                    <Label>Repository Name</Label>
-                    <Input 
-                      value={githubRepo} 
-                      onChange={e => setGithubRepo(e.target.value)} 
-                      placeholder="e.g. nextjscms-site" 
-                      required
-                    />
+                ) : (
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label>GitHub Owner / Org</Label>
+                      <Input 
+                        value={githubOwner} 
+                        onChange={e => setGithubOwner(e.target.value)} 
+                        placeholder="e.g. your-username" 
+                        required
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Repository Name</Label>
+                      <Input 
+                        value={githubRepo} 
+                        onChange={e => setGithubRepo(e.target.value)} 
+                        placeholder="e.g. nextjscms-site" 
+                        required
+                      />
+                    </div>
                   </div>
-                </div>
+                )}
 
                 {searchParams.get('github_token') ? (
                   <Button onClick={handleSaveGithubSettings} className="w-full h-11 bg-green-600 hover:bg-green-700" disabled={loading}>
