@@ -35,13 +35,18 @@ async function githubApi(endpoint: string, options: RequestInit, token: string) 
 }
 
 export async function createGithubCommit(files: { path: string, content: Buffer }[], message: string, settings: any) {
-  const { githubToken, githubOwner, githubRepo, branch = 'master' } = settings; // default to master or main
-  const actualBranch = branch || 'master';
+  const { githubToken, githubOwner, githubRepo, branch } = settings;
   const basePath = `/repos/${githubOwner}/${githubRepo}`;
 
   console.log(`Starting GitHub Commit: ${message}`);
 
   // 1. Get branch info
+  let actualBranch = branch;
+  if (!actualBranch) {
+    const repoInfo = await githubApi(basePath, {}, githubToken);
+    actualBranch = repoInfo.default_branch || 'main';
+  }
+
   const ref = await githubApi(`${basePath}/git/ref/heads/${actualBranch}`, {}, githubToken);
   const commitSha = ref.object.sha;
   
