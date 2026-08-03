@@ -55,7 +55,7 @@ export default function Home() {
 
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4 pt-8">
             <a
-              href="https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Fnextjscms%2Fcms&root-directory=packages%2Fcore&stores=%5B%7B%22type%22%3A%22postgres%22%7D%5D&env=WEBSITE_NAME,ADMIN_EMAIL,ADMIN_PASSWORD&envDescription=Provide%20your%20site%20name%20and%20admin%20credentials%20for%20initial%20setup"
+              href="https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Fnextjscms%2Fcms&root-directory=packages%2Fcore&stores=%5B%7B%22type%22%3A%22postgres%22%7D%5D&env=WEBSITE_NAME,ADMIN_EMAIL,ADMIN_PASSWORD&envDescription=Provide%20your%20site%20name%20and%20admin%20credentials%20for%20initial%20setup&project-name=nextjscms-site&demo-title=NextjsCMS&demo-description=The+React+CMS&demo-image=https%3A%2F%2Fog-image.vercel.app%2FNextjsCMS.png%3Ftheme%3Ddark%26md%3D1%26fontSize%3D125px"
               target="_blank"
               rel="noopener noreferrer"
               className="flex h-12 items-center justify-center gap-2 rounded-md bg-white px-8 text-base font-semibold text-black transition-all hover:bg-gray-200 hover:scale-[1.02] active:scale-[0.98] w-full sm:w-auto"
