@@ -12,6 +12,7 @@ export default async function SettingsPage() {
   // Default from env if missing
   const initialOwner = gitOpsSettings?.githubOwner || process.env.VERCEL_GIT_REPO_OWNER || '';
   const initialRepo = gitOpsSettings?.githubRepo || process.env.VERCEL_GIT_REPO_SLUG || '';
+  const initialRootDir = gitOpsSettings?.rootDir !== undefined ? gitOpsSettings.rootDir : 'packages/core';
 
   return (
     <div className="space-y-6">
@@ -23,6 +24,7 @@ export default async function SettingsPage() {
       <AutoInstallerSettings 
         initialOwner={initialOwner} 
         initialRepo={initialRepo} 
+        initialRootDir={initialRootDir}
         hasToken={hasToken} 
       />
 

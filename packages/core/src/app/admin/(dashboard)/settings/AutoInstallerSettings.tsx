@@ -9,7 +9,7 @@ import { Loader2, GitBranch, CheckCircle2 } from 'lucide-react';
 import { saveGitOpsToken } from '@/app/admin/setup/setup-actions';
 import { useSearchParams } from 'next/navigation';
 
-export default function AutoInstallerSettings({ initialOwner, initialRepo, hasToken }: { initialOwner: string, initialRepo: string, hasToken: boolean }) {
+export default function AutoInstallerSettings({ initialOwner, initialRepo, initialRootDir, hasToken }: { initialOwner: string, initialRepo: string, initialRootDir: string, hasToken: boolean }) {
   const searchParams = useSearchParams();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -17,14 +17,25 @@ export default function AutoInstallerSettings({ initialOwner, initialRepo, hasTo
 
   const [githubOwner, setGithubOwner] = useState(initialOwner);
   const [githubRepo, setGithubRepo] = useState(initialRepo);
+  const [rootDir, setRootDir] = useState(initialRootDir);
 
   useEffect(() => {
     const token = searchParams.get('github_token');
     if (token) {
       setLoading(true);
-      saveGitOpsToken(token, githubOwner, githubRepo).then(() => {
+      const savedOwner = sessionStorage.getItem('nextjscms_github_owner') || githubOwner;
+      const savedRepo = sessionStorage.getItem('nextjscms_github_repo') || githubRepo;
+      const savedRootDir = sessionStorage.getItem('nextjscms_github_rootdir') || rootDir;
+      
+      saveGitOpsToken(token, savedOwner, savedRepo, savedRootDir).then(() => {
         setSuccess('Successfully re-connected to GitHub!');
         setLoading(false);
+        setGithubOwner(savedOwner);
+        setGithubRepo(savedRepo);
+        setRootDir(savedRootDir);
+        sessionStorage.removeItem('nextjscms_github_owner');
+        sessionStorage.removeItem('nextjscms_github_repo');
+        sessionStorage.removeItem('nextjscms_github_rootdir');
         // Clear url bar
         window.history.replaceState(null, '', '/admin/settings');
       }).catch(e => {
@@ -39,6 +50,11 @@ export default function AutoInstallerSettings({ initialOwner, initialRepo, hasTo
       setError('Please enter your GitHub username/org and repository name');
       return;
     }
+    // Save to sessionStorage so we don't lose them after the OAuth redirect
+    sessionStorage.setItem('nextjscms_github_owner', githubOwner);
+    sessionStorage.setItem('nextjscms_github_repo', githubRepo);
+    sessionStorage.setItem('nextjscms_github_rootdir', rootDir);
+
     const returnUrl = window.location.origin + '/admin/settings';
     const proxyUrl = process.env.NEXT_PUBLIC_MARKETPLACE_API_URL || 'https://nextjscms-api.vercel.app';
     window.location.href = `${proxyUrl}/api/auth/github/authorize?return_url=${encodeURIComponent(returnUrl)}`;
@@ -76,7 +92,8 @@ export default function AutoInstallerSettings({ initialOwner, initialRepo, hasTo
             )}
           </div>
         ) : (
-          <div className="grid grid-cols-2 gap-4">
+          <>
+            <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label>GitHub Owner / Org</Label>
               <Input 
@@ -94,6 +111,18 @@ export default function AutoInstallerSettings({ initialOwner, initialRepo, hasTo
               />
             </div>
           </div>
+          <div className="pt-2">
+            <div className="space-y-2 max-w-[50%]">
+              <Label>Subdirectory (Optional)</Label>
+              <Input 
+                value={rootDir} 
+                onChange={e => setRootDir(e.target.value)} 
+                placeholder="e.g. packages/core (if using a monorepo)" 
+              />
+              <p className="text-xs text-slate-500">Leave empty if the CMS is at the root of the repository.</p>
+            </div>
+          </div>
+        </>
         )}
       </CardContent>
       <CardFooter>

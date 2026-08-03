@@ -50,7 +50,7 @@ export async function createFirstAdmin(formData: FormData) {
   return { success: true };
 }
 
-export async function saveGitOpsToken(token: string, owner: string, repo: string, branch?: string) {
+export async function saveGitOpsToken(token: string, owner: string, repo: string, rootDir?: string, branch?: string) {
   const db = getDb();
   
   const settingsData: any = {
@@ -58,6 +58,9 @@ export async function saveGitOpsToken(token: string, owner: string, repo: string
     githubOwner: owner,
     githubRepo: repo,
   };
+  if (rootDir !== undefined) {
+    settingsData.rootDir = rootDir;
+  }
   if (branch) {
     settingsData.branch = branch;
   }

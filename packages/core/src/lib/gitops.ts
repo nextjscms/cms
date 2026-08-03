@@ -152,5 +152,9 @@ export async function extractTarballToMemoryAndCommit(
       .on('error', reject);
   });
 
+  if (files.length === 0) {
+    throw new Error('No files were found inside the downloaded theme tarball. The tarball may be empty or incorrectly formatted.');
+  }
+
   await createGithubCommit(files, commitMessage, settings);
 }

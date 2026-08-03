@@ -46,8 +46,17 @@ export async function installTheme(slug: string, downloadUrl: string, version?: 
 
   const gitOpsSettings = await getGitOpsSettings();
   if (gitOpsSettings && gitOpsSettings.githubToken) {
+    if (!gitOpsSettings.githubOwner || !gitOpsSettings.githubRepo) {
+      throw new Error('GitHub Owner or Repository is not configured. Please reconnect GitHub in the Auto-Installer settings.');
+    }
     console.log('GitOps enabled, pushing theme to GitHub');
-    await extractTarballToMemoryAndCommit(finalResponse.body, `src/themes/${slug}`, `Install NextjsCMS Theme: ${slug}`, gitOpsSettings);
+    
+    // Support monorepo root directory prefix
+    const rootDirStr = gitOpsSettings.rootDir !== undefined ? gitOpsSettings.rootDir : 'packages/core';
+    const rootDirPrefix = rootDirStr ? `${rootDirStr}/` : '';
+    const targetPrefix = `${rootDirPrefix}src/themes/${slug}`;
+    
+    await extractTarballToMemoryAndCommit(finalResponse.body, targetPrefix, `Install NextjsCMS Theme: ${slug}`, gitOpsSettings);
     revalidatePath('/admin/themes');
     return { success: true };
   }
