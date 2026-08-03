@@ -38,5 +38,6 @@ export const authConfig: NextAuthConfig = {
   },
   session: {
     strategy: "jwt"
-  }
+  },
+  secret: process.env.AUTH_SECRET || "fallback_secret_for_nextjscms_to_be_securely_overwritten"
 };
