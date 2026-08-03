@@ -3,7 +3,10 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter }
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import AutoInstallerSettings from './AutoInstallerSettings';
+import CoreUpdater from './CoreUpdater';
 import { getGitOpsSettings } from '@/lib/gitops';
+import fs from 'fs';
+import path from 'path';
 
 export default async function SettingsPage() {
   const gitOpsSettings = await getGitOpsSettings();
@@ -13,6 +16,17 @@ export default async function SettingsPage() {
   const initialOwner = gitOpsSettings?.githubOwner || process.env.VERCEL_GIT_REPO_OWNER || '';
   const initialRepo = gitOpsSettings?.githubRepo || process.env.VERCEL_GIT_REPO_SLUG || '';
   const initialRootDir = gitOpsSettings?.rootDir !== undefined ? gitOpsSettings.rootDir : 'packages/core';
+
+  let currentVersion = '0.0.0';
+  try {
+    const pkgPath = path.join(process.cwd(), 'package.json');
+    if (fs.existsSync(pkgPath)) {
+      const pkg = JSON.parse(fs.readFileSync(pkgPath, 'utf8'));
+      currentVersion = pkg.version || '0.0.0';
+    }
+  } catch (e) {
+    console.warn("Could not read package.json version");
+  }
 
   return (
     <div className="space-y-6">
@@ -29,6 +43,7 @@ export default async function SettingsPage() {
       />
 
       <div className="grid gap-6 md:grid-cols-2">
+        <CoreUpdater currentVersion={currentVersion} />
         <Card>
           <CardHeader>
             <CardTitle>General Information</CardTitle>

@@ -118,7 +118,8 @@ export async function extractTarballToMemoryAndCommit(
   responseBody: any, 
   targetPrefix: string, 
   commitMessage: string, 
-  settings: any
+  settings: any,
+  excludeFilter?: (path: string) => boolean
 ) {
   const extract = tar.extract();
   const files: { path: string, content: Buffer }[] = [];
@@ -133,10 +134,13 @@ export async function extractTarballToMemoryAndCommit(
       const cleanPath = parts.join('/');
       
       if (cleanPath && header.type === 'file') {
-        files.push({
-          path: `${targetPrefix}/${cleanPath}`,
-          content: Buffer.concat(chunks),
-        });
+        const fullPath = targetPrefix ? `${targetPrefix}/${cleanPath}` : cleanPath;
+        if (!excludeFilter || !excludeFilter(fullPath)) {
+          files.push({
+            path: fullPath,
+            content: Buffer.concat(chunks),
+          });
+        }
       }
       next();
     });

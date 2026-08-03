@@ -13,6 +13,7 @@ import { hasPermission } from '@/lib/auth-utils';
 import { signOut } from '@/auth';
 import { SidebarLink } from './SidebarLink';
 import { Toaster } from '@/components/ui/sonner';
+import { DeployButton } from './DeployButton';
 
 export const dynamic = 'force-dynamic';
 
@@ -25,6 +26,7 @@ import { PluginUIs } from '@/plugins/registry';
 
 import { hasExistingUsers } from '@/app/admin/setup/setup-actions';
 import { getGitOpsSettings } from '@/lib/gitops';
+import { getPendingDeployments } from '@/app/admin/actions';
 
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {
   const usersExist = await hasExistingUsers();
@@ -36,6 +38,8 @@ export default async function AdminLayout({ children }: { children: React.ReactN
   if (!gitOps || !gitOps.githubToken) {
     redirect('/admin/setup');
   }
+
+  const pendingDeployments = await getPendingDeployments();
 
   const isAdmin = await hasPermission('admin');
   const db = getDb();
@@ -190,6 +194,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
         <header className="h-16 bg-white border-b border-neutral-200 flex items-center justify-between px-8">
           <h2 className="text-lg font-medium text-neutral-800">Welcome back, Admin</h2>
           <div className="flex items-center gap-6">
+            <DeployButton gitOpsEnabled={!!gitOps?.githubToken} pendingDeployments={pendingDeployments} />
             <Link href="/" target="_blank" className="text-sm font-medium text-blue-600 hover:underline">
               View Live Site &rarr;
             </Link>

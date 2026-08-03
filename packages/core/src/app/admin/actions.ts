@@ -12,6 +12,31 @@ import { auth } from '@/auth';
 import { getGitOpsSettings, extractTarballToMemoryAndCommit, createGithubCommit } from '@/lib/gitops';
 import { nextjscms } from '@/lib/hooks';
 
+export async function getPendingDeployments(): Promise<{ message: string; timestamp: string }[]> {
+  const db = getDb();
+  const existing = await db.select().from(settings).where(eq(settings.key, 'pending_deployments'));
+  if (existing.length > 0 && existing[0].value) {
+    try { return JSON.parse(existing[0].value); } catch (e) {}
+  }
+  return [];
+}
+
+async function addPendingDeployment(message: string) {
+  const db = getDb();
+  const existing = await db.select().from(settings).where(eq(settings.key, 'pending_deployments'));
+  let pending = [];
+  if (existing.length > 0 && existing[0].value) {
+    try { pending = JSON.parse(existing[0].value); } catch (e) {}
+  }
+  pending.push({ message, timestamp: new Date().toISOString() });
+  
+  if (existing.length > 0) {
+    await db.update(settings).set({ value: JSON.stringify(pending) }).where(eq(settings.key, 'pending_deployments'));
+  } else {
+    await db.insert(settings).values({ key: 'pending_deployments', value: JSON.stringify(pending) });
+  }
+}
+
 export async function activateTheme(formData: FormData) {
   const slug = formData.get('themeSlug') as string;
   
@@ -56,7 +81,8 @@ export async function installTheme(slug: string, downloadUrl: string, version?: 
     const rootDirPrefix = rootDirStr ? `${rootDirStr}/` : '';
     const targetPrefix = `${rootDirPrefix}src/themes/${slug}`;
     
-    await extractTarballToMemoryAndCommit(finalResponse.body, targetPrefix, `Install NextjsCMS Theme: ${slug}`, gitOpsSettings);
+    await extractTarballToMemoryAndCommit(finalResponse.body, targetPrefix, `Install NextjsCMS Theme: ${slug} [skip ci]`, gitOpsSettings);
+    await addPendingDeployment(`Installed Theme: ${slug}`);
     revalidatePath('/admin/themes');
     return { success: true };
   }
@@ -131,7 +157,8 @@ ${activePlugins.map((s, i) => `  '${s}': plugin${i},`).join('\n')}
       path: 'src/plugins/registry.ts',
       content: Buffer.from(registryContent, 'utf-8')
     }];
-    await createGithubCommit(files, `Toggle NextjsCMS Plugin: ${slug} (${activate ? 'Activate' : 'Deactivate'})`, gitOpsSettings);
+    await createGithubCommit(files, `Toggle NextjsCMS Plugin: ${slug} (${activate ? 'Activate' : 'Deactivate'}) [skip ci]`, gitOpsSettings);
+    await addPendingDeployment(`${activate ? 'Activated' : 'Deactivated'} Plugin: ${slug}`);
     revalidatePath('/admin/plugins');
     return;
   }
@@ -160,7 +187,8 @@ export async function installPlugin(slug: string, downloadUrl: string, version?:
   const gitOpsSettings = await getGitOpsSettings();
   if (gitOpsSettings && gitOpsSettings.githubToken) {
     console.log('GitOps enabled, pushing plugin to GitHub');
-    await extractTarballToMemoryAndCommit(finalResponse.body, `src/plugins/${slug}`, `Install NextjsCMS Plugin: ${slug}`, gitOpsSettings);
+    await extractTarballToMemoryAndCommit(finalResponse.body, `src/plugins/${slug}`, `Install NextjsCMS Plugin: ${slug} [skip ci]`, gitOpsSettings);
+    await addPendingDeployment(`Installed Plugin: ${slug}`);
     revalidatePath('/admin/plugins');
     return { success: true };
   }
@@ -236,3 +264,72 @@ export async function toggleSidebarVisibility(slug: string, isHidden: boolean) {
   revalidatePath('/admin');
 }
 
+export async function triggerVercelBuild() {
+  const gitOpsSettings = await getGitOpsSettings();
+  if (gitOpsSettings && gitOpsSettings.githubToken) {
+    console.log('Triggering manual Vercel build via dummy commit');
+    const files = [{
+      path: '.vercel-trigger',
+      content: Buffer.from(new Date().toISOString(), 'utf-8')
+    }];
+    await createGithubCommit(files, 'Trigger Vercel Build (Manual Deployment)', gitOpsSettings);
+    
+    // Clear pending deployments
+    const db = getDb();
+    const existing = await db.select().from(settings).where(eq(settings.key, 'pending_deployments'));
+    if (existing.length > 0) {
+      await db.update(settings).set({ value: JSON.stringify([]) }).where(eq(settings.key, 'pending_deployments'));
+    }
+    
+    return { success: true };
+  }
+  throw new Error('GitOps is not configured.');
+}
+
+export async function updateCore(downloadUrl: string, version: string) {
+  const apiUrl = process.env.NEXT_PUBLIC_MARKETPLACE_API_URL || 'https://nextjscms-api.vercel.app';
+  
+  const proxyUrl = `${apiUrl}/api/core/download?url=${encodeURIComponent(downloadUrl)}&version=${version || ''}`;
+  console.log(`Downloading core update via proxy: ${proxyUrl}`);
+  
+  const finalResponse = await fetch(proxyUrl);
+
+  if (!finalResponse.ok) {
+    throw new Error(`Failed to download core update tarball from API (${finalResponse.status}): ${finalResponse.statusText}`);
+  }
+
+  const gitOpsSettings = await getGitOpsSettings();
+  if (gitOpsSettings && gitOpsSettings.githubToken) {
+    if (!gitOpsSettings.githubOwner || !gitOpsSettings.githubRepo) {
+      throw new Error('GitHub Owner or Repository is not configured.');
+    }
+    console.log('GitOps enabled, pushing core update to GitHub');
+    
+    const rootDirStr = gitOpsSettings.rootDir !== undefined ? gitOpsSettings.rootDir : 'packages/core';
+    const targetPrefix = rootDirStr || '';
+    
+    const excludeFilter = (filePath: string) => {
+       const pathToCheck = (targetPrefix && filePath.startsWith(targetPrefix + '/')) 
+         ? filePath.substring(targetPrefix.length + 1) 
+         : filePath;
+       
+       if (pathToCheck.startsWith('src/themes/') || pathToCheck.startsWith('src/plugins/')) {
+         return true;
+       }
+       return false;
+    };
+    
+    await extractTarballToMemoryAndCommit(
+      finalResponse.body, 
+      targetPrefix, 
+      `Update NextjsCMS Core to v${version} [skip ci]`, 
+      gitOpsSettings,
+      excludeFilter
+    );
+    
+    await addPendingDeployment(`Updated Core to v${version}`);
+    return { success: true };
+  }
+  
+  throw new Error('GitOps is required to update the core in this environment.');
+}
