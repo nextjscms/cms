@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Loader2, Download, AlertTriangle, ShieldCheck } from 'lucide-react';
 import { toast } from 'sonner';
 import { updateCore } from '@/app/admin/actions';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 
 interface CoreUpdaterProps {
   currentVersion: string;
@@ -14,6 +15,7 @@ interface CoreUpdaterProps {
 export default function CoreUpdater({ currentVersion }: CoreUpdaterProps) {
   const [latestVersion, setLatestVersion] = useState<string | null>(null);
   const [downloadUrl, setDownloadUrl] = useState<string | null>(null);
+  const [releaseNotes, setReleaseNotes] = useState<string>('');
   const [loading, setLoading] = useState(true);
   const [isPending, startTransition] = useTransition();
 
@@ -26,6 +28,7 @@ export default function CoreUpdater({ currentVersion }: CoreUpdaterProps) {
           const data = await res.json();
           setLatestVersion(data.version);
           setDownloadUrl(data.url);
+          setReleaseNotes(data.releaseNotes || 'No release notes provided.');
         }
       } catch (err) {
         console.error("Failed to check for core updates", err);
@@ -99,11 +102,31 @@ export default function CoreUpdater({ currentVersion }: CoreUpdaterProps) {
             <Loader2 className="w-4 h-4 mr-2 animate-spin" /> Checking for updates...
           </div>
         ) : latestVersion ? (
-          <div className="flex items-center justify-between text-sm">
-            <span className="text-slate-500 font-medium">Latest Version</span>
-            <span className={`font-mono px-2 py-1 rounded ${isUpdateAvailable ? 'bg-amber-100 text-amber-800 font-bold' : 'bg-slate-100 text-slate-700'}`}>
-              v{latestVersion}
-            </span>
+          <div className="space-y-3">
+            <div className="flex items-center justify-between text-sm">
+              <span className="text-slate-500 font-medium">Latest Version</span>
+              <span className={`font-mono px-2 py-1 rounded ${isUpdateAvailable ? 'bg-amber-100 text-amber-800 font-bold' : 'bg-slate-100 text-slate-700'}`}>
+                v{latestVersion}
+              </span>
+            </div>
+            
+            {isUpdateAvailable && releaseNotes && (
+              <Dialog>
+                <DialogTrigger asChild>
+                  <Button variant="outline" size="sm" className="w-full text-slate-600">
+                    View Release Notes
+                  </Button>
+                </DialogTrigger>
+                <DialogContent className="sm:max-w-[600px]">
+                  <DialogHeader>
+                    <DialogTitle>What's New in v{latestVersion}</DialogTitle>
+                  </DialogHeader>
+                  <div className="mt-4 p-4 bg-slate-50 rounded-md border text-sm text-slate-700 whitespace-pre-wrap max-h-[60vh] overflow-y-auto font-mono">
+                    {releaseNotes}
+                  </div>
+                </DialogContent>
+              </Dialog>
+            )}
           </div>
         ) : (
           <div className="text-sm text-red-500">Could not check for updates.</div>
