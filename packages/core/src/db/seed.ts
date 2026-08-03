@@ -12,7 +12,7 @@ async function main() {
 
   const adminEmail = process.env.ADMIN_EMAIL;
   const adminPassword = process.env.ADMIN_PASSWORD;
-  const siteName = process.env.NEXT_PUBLIC_SITE_NAME || "NextjsCMS";
+  const siteName = process.env.WEBSITE_NAME || "NextjsCMS";
 
   if (!adminEmail || !adminPassword) {
     console.log("No ADMIN_EMAIL or ADMIN_PASSWORD found in environment. Skipping auto-provisioning.");
