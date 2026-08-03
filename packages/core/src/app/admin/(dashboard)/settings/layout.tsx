@@ -16,12 +16,16 @@ export default async function SettingsLayout({
   const db = getDb();
 
   // Fetch active plugins
-  const [activePluginsSetting] = await db.select().from(settings).where(eq(settings.key, 'activePlugins'));
   let activePlugins: string[] = [];
-  if (activePluginsSetting?.value) {
-    try {
-      activePlugins = JSON.parse(activePluginsSetting.value);
-    } catch (e) { }
+  try {
+    const [activePluginsSetting] = await db.select().from(settings).where(eq(settings.key, 'activePlugins'));
+    if (activePluginsSetting?.value) {
+      try {
+        activePlugins = JSON.parse(activePluginsSetting.value);
+      } catch (e) { }
+    }
+  } catch (error: any) {
+    console.error('Failed to fetch active plugins', error);
   }
 
   const pluginsDir = path.join(process.cwd(), 'src/plugins');

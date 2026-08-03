@@ -3,12 +3,15 @@ import { settings as settingsTable } from '@/db/schema';
 import { eq } from 'drizzle-orm';
 
 export async function getGitOpsSettings() {
-  const db = getDb();
-  const settingsRows = await db.select().from(settingsTable).where(eq(settingsTable.key, 'gitops_settings'));
-  if (settingsRows.length === 0 || !settingsRows[0].value) return null;
   try {
+    const db = getDb();
+    const settingsRows = await db.select().from(settingsTable).where(eq(settingsTable.key, 'gitops_settings'));
+    if (settingsRows.length === 0 || !settingsRows[0].value) return null;
     return JSON.parse(settingsRows[0].value);
-  } catch (e) {
+  } catch (error: any) {
+    if (error.message?.includes('relation "settings" does not exist') || error.message?.includes('does not exist')) {
+      return null;
+    }
     return null;
   }
 }

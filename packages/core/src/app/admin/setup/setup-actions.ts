@@ -6,9 +6,16 @@ import { eq } from 'drizzle-orm';
 import { revalidatePath } from 'next/cache';
 
 export async function hasExistingUsers() {
-  const db = getDb();
-  const existingUsers = await db.select().from(users).limit(1);
-  return existingUsers.length > 0;
+  try {
+    const db = getDb();
+    const existingUsers = await db.select().from(users).limit(1);
+    return existingUsers.length > 0;
+  } catch (error: any) {
+    if (error.message?.includes('relation "users" does not exist') || error.message?.includes('does not exist')) {
+      return false;
+    }
+    throw error;
+  }
 }
 
 export async function createFirstAdmin(formData: FormData) {
