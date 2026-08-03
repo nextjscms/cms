@@ -112,7 +112,11 @@ export const PluginUIs: Record<string, any> = {
 ${activePlugins.map((s, i) => `  '${s}': plugin${i},`).join('\n')}
 };
 `;
-  fs.writeFileSync(path.join(process.cwd(), 'src/plugins/registry.ts'), registryContent);
+  try {
+    fs.writeFileSync(path.join(process.cwd(), 'src/plugins/registry.ts'), registryContent);
+  } catch (e: any) {
+    console.warn('Could not write registry.ts (likely read-only filesystem). Proceeding anyway.', e.message);
+  }
 
   revalidatePath('/admin/plugins');
 }
