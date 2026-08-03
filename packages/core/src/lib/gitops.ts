@@ -42,7 +42,7 @@ export async function createGithubCommit(files: { path: string, content: Buffer 
 
   // 1. Get branch info
   let actualBranch = branch;
-  if (!actualBranch) {
+  if (!actualBranch || actualBranch === 'master') {
     const repoInfo = await githubApi(basePath, {}, githubToken);
     actualBranch = repoInfo.default_branch || 'main';
   }

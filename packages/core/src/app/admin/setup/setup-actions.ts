@@ -49,15 +49,17 @@ export async function createFirstAdmin(formData: FormData) {
   return { success: true };
 }
 
-export async function saveGitOpsToken(token: string, owner: string, repo: string, branch: string = 'master') {
+export async function saveGitOpsToken(token: string, owner: string, repo: string, branch?: string) {
   const db = getDb();
   
-  const settingsData = {
+  const settingsData: any = {
     githubToken: token,
     githubOwner: owner,
     githubRepo: repo,
-    branch,
   };
+  if (branch) {
+    settingsData.branch = branch;
+  }
 
   const stringified = JSON.stringify(settingsData);
 
