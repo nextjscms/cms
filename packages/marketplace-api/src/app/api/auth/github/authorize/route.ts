@@ -25,7 +25,7 @@ export async function GET(request: NextRequest) {
   const githubOAuthUrl = new URL('https://github.com/login/oauth/authorize');
   githubOAuthUrl.searchParams.append('client_id', clientId);
   githubOAuthUrl.searchParams.append('state', state);
-  githubOAuthUrl.searchParams.append('scope', 'repo'); // We need 'repo' scope to push commits for the deploy plugin
+  // Note: GitHub Apps do not use the 'scope' parameter. Permissions are configured on the App itself.
 
   return NextResponse.redirect(githubOAuthUrl.toString());
 }
