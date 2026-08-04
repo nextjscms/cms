@@ -5,7 +5,7 @@ import path from 'path';
 import os from 'os';
 import { exec } from 'child_process';
 import util from 'util';
-import tar from 'tar';
+import * as tar from 'tar';
 
 const execPromise = util.promisify(exec);
 
