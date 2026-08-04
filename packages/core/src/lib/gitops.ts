@@ -56,24 +56,39 @@ export async function createGithubCommit(files: { path: string, content: Buffer 
   const commit = await githubApi(`${basePath}/git/commits/${commitSha}`, {}, githubToken);
   const treeSha = commit.tree.sha;
 
-  // 3. Create Blobs for each file
+  // 3. Create Blobs for binary/large files, inline for text files
   const treeItems = [];
   for (const file of files) {
-    console.log(`Creating Blob for ${file.path}`);
-    const blobRes = await githubApi(`${basePath}/git/blobs`, {
-      method: 'POST',
-      body: JSON.stringify({
-        content: file.content.toString('base64'),
-        encoding: 'base64',
-      })
-    }, githubToken);
-    
-    treeItems.push({
-      path: file.path,
-      mode: '100644',
-      type: 'blob',
-      sha: blobRes.sha,
-    });
+    const isText = !file.content.includes(0);
+    const isSmall = file.content.length < 500 * 1024; // 500KB
+
+    if (isText && isSmall) {
+      // Use inline content for small text files to avoid hitting secondary rate limits
+      treeItems.push({
+        path: file.path,
+        mode: '100644',
+        type: 'blob',
+        content: file.content.toString('utf-8'),
+      });
+    } else {
+      console.log(`Creating Blob for ${file.path}`);
+      // Add a small delay to avoid hitting the abuse limit for POST requests
+      await new Promise(resolve => setTimeout(resolve, 100));
+      const blobRes = await githubApi(`${basePath}/git/blobs`, {
+        method: 'POST',
+        body: JSON.stringify({
+          content: file.content.toString('base64'),
+          encoding: 'base64',
+        })
+      }, githubToken);
+      
+      treeItems.push({
+        path: file.path,
+        mode: '100644',
+        type: 'blob',
+        sha: blobRes.sha,
+      });
+    }
   }
 
   // 4. Create new Tree

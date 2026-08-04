@@ -306,14 +306,10 @@ export async function updateCore(downloadUrl: string, version: string) {
     console.log('GitOps enabled, pushing core update to GitHub');
     
     const rootDirStr = gitOpsSettings.rootDir !== undefined ? gitOpsSettings.rootDir : 'packages/core';
-    const targetPrefix = rootDirStr || '';
+    const rootDirPrefix = rootDirStr ? `${rootDirStr}/` : '';
     
     const excludeFilter = (filePath: string) => {
-       const pathToCheck = (targetPrefix && filePath.startsWith(targetPrefix + '/')) 
-         ? filePath.substring(targetPrefix.length + 1) 
-         : filePath;
-       
-       if (pathToCheck.startsWith('src/themes/') || pathToCheck.startsWith('src/plugins/')) {
+       if (filePath.startsWith(`${rootDirPrefix}src/themes/`) || filePath.startsWith(`${rootDirPrefix}src/plugins/`)) {
          return true;
        }
        return false;
@@ -321,7 +317,7 @@ export async function updateCore(downloadUrl: string, version: string) {
     
     await extractTarballToMemoryAndCommit(
       finalResponse.body, 
-      targetPrefix, 
+      '', // targetPrefix is empty so it doesn't double-nest the extracted paths
       `Update NextjsCMS Core to v${version} [skip ci]`, 
       gitOpsSettings,
       excludeFilter
