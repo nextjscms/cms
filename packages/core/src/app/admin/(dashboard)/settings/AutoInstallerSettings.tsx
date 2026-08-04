@@ -66,6 +66,9 @@ export default function AutoInstallerSettings({ initialOwner, initialRepo, initi
         <CardTitle>Auto-Installer (GitOps)</CardTitle>
         <CardDescription>
           {hasToken ? 'Connected to GitHub.' : 'Connect to GitHub to enable 1-click plugin and theme installations.'}
+          <div className="mt-2 text-xs text-slate-500">
+            Note: You must <a href="https://github.com/apps/nextjscms-auto-pilot/installations/new" target="_blank" rel="noreferrer" className="text-blue-500 hover:underline">install the NextjsCMS Auto-Pilot App</a> on your repository before connecting.
+          </div>
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">

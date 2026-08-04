@@ -22,12 +22,9 @@ export async function GET(request: NextRequest) {
   };
   const state = Buffer.from(JSON.stringify(stateObj)).toString('base64url');
 
-  const githubAppSlug = process.env.GITHUB_APP_SLUG || 'nextjscms-auto-pilot';
-  const installUrl = new URL(`https://github.com/apps/${githubAppSlug}/installations/new`);
-  
-  // We pass the state to the installation URL. GitHub will preserve it and pass it 
-  // back to our Setup URL / Callback after the installation is complete.
-  installUrl.searchParams.append('state', state);
+  const authorizeUrl = new URL('https://github.com/login/oauth/authorize');
+  authorizeUrl.searchParams.append('client_id', clientId);
+  authorizeUrl.searchParams.append('state', state);
 
-  return NextResponse.redirect(installUrl.toString());
+  return NextResponse.redirect(authorizeUrl.toString());
 }
