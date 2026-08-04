@@ -2,9 +2,11 @@
 
 import { useAuth } from '../context/AuthContext';
 import Link from 'next/link';
+import { usePathname } from 'next/navigation';
 
 export default function Navbar() {
   const { user, login, logout, isLoggingIn } = useAuth();
+  const pathname = usePathname();
 
   return (
     <nav className="flex items-center justify-between px-8 py-6 max-w-6xl mx-auto w-full border-b border-white/[0.08]">
@@ -18,10 +20,14 @@ export default function Navbar() {
           <span className="text-xl font-bold tracking-tight text-white">NextjsCMS</span>
         </Link>
       </div>
-      <div className="flex gap-8 text-sm font-medium text-gray-400 items-center">
-        <Link href="/#showcase" className="hover:text-white transition-colors">Showcase</Link>
-        <Link href="/docs" className="hover:text-white transition-colors">Docs</Link>
-        <Link href="/developer" className="hover:text-white transition-colors text-white font-bold">Developer</Link>
+      <div className="flex gap-8 text-sm font-medium items-center">
+        <Link href="/#showcase" className="text-gray-400 hover:text-white transition-colors">Showcase</Link>
+        <Link 
+          href="/developer" 
+          className={`transition-colors ${pathname === '/developer' ? 'text-white font-bold' : 'text-gray-400 hover:text-white'}`}
+        >
+          Developer
+        </Link>
         
         {/* Always visible GitHub link */}
         <a href="https://github.com/nextjscms/cms" target="_blank" rel="noreferrer" className="hover:text-white transition-colors flex items-center gap-2">

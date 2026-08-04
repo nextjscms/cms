@@ -1,155 +1,88 @@
-'use client';
+export const metadata = {
+  title: 'Documentation | NextjsCMS',
+  description: 'Learn how to build and publish themes and plugins for NextjsCMS.',
+};
 
-import { useState } from 'react';
-import { useAuth } from '../../context/AuthContext';
-
-export default function DeveloperPage() {
-  const { user, login, isCheckingAuth, token, isLoggingIn } = useAuth();
-  
-  const [loading, setLoading] = useState(false);
-  const [message, setMessage] = useState('');
-  const [error, setError] = useState('');
-
-  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    if (!token) return;
-
-    setLoading(true);
-    setMessage('');
-    setError('');
-
-    const formData = new FormData(e.currentTarget);
-
-    try {
-      const response = await fetch('/api/upload', {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${token}`
-        },
-        body: formData,
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.error || 'Failed to upload package');
-      }
-
-      setMessage(`Success! Version ${data.version} published and listed by @${user?.login}.`);
-      (e.target as HTMLFormElement).reset();
-    } catch (err: any) {
-      setError(err.message);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  if (isCheckingAuth) {
-    return (
-      <div className="flex-1 flex items-center justify-center">
-        <div className="animate-pulse">Loading secure environment...</div>
-      </div>
-    );
-  }
-
+export default function DocsPage() {
   return (
-    <div className="flex-1 flex flex-col font-sans pb-24">
-      <main className="max-w-2xl mx-auto w-full pt-16 px-6">
+    <div className="flex-1 flex flex-col font-sans pb-24 text-white">
+      <main className="max-w-3xl mx-auto w-full pt-16 px-6">
         
-        <div className="mb-10 text-center">
-          <h1 className="text-4xl font-extrabold tracking-tight mb-3">Developer Portal</h1>
+        <div className="mb-12">
+          <h1 className="text-4xl font-extrabold tracking-tight mb-4 text-transparent bg-clip-text bg-gradient-to-b from-white to-gray-500">Developer Documentation</h1>
           <p className="text-gray-400 font-light text-lg">
-            Upload your compiled <code>.tar.gz</code> to the NextjsCMS Marketplace.
+            Welcome to the NextjsCMS developer docs! Here you'll learn how to build, package, and publish themes and plugins to the marketplace.
           </p>
         </div>
 
-        {!user ? (
-          <div className="border border-white/[0.08] bg-white/[0.02] rounded-xl p-12 text-center shadow-[0_0_30px_rgba(255,255,255,0.02)]">
-            <svg className="w-12 h-12 text-gray-500 mx-auto mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8V7a4 4 0 00-8 0v4h8z" />
-            </svg>
-            <h2 className="text-xl font-semibold mb-2">Authentication Required</h2>
-            <p className="text-gray-400 text-sm mb-6 max-w-md mx-auto">
-              You must be logged in with GitHub to publish themes and plugins. Your GitHub handle will be publicly listed as the author.
+        <div className="space-y-12">
+          {/* Anatomy of a Package */}
+          <section className="space-y-4">
+            <h2 className="text-2xl font-bold border-b border-white/[0.08] pb-2 text-gray-200">1. Anatomy of a Package</h2>
+            <p className="text-gray-400">
+              NextjsCMS packages (themes or plugins) are simply folders with a <code>package.json</code> file. Since NextjsCMS is built entirely on React Server Components, your themes are just regular React components, and your plugins can leverage standard Node/React APIs.
             </p>
-            <button 
-              onClick={login}
-              disabled={isLoggingIn}
-              className="bg-white text-black hover:bg-gray-200 px-6 py-2.5 rounded-md font-medium transition-all flex justify-center items-center gap-2 mx-auto disabled:opacity-75"
-            >
-              {isLoggingIn && <span className="flex h-3 w-3 rounded-full bg-black animate-ping" />}
-              {isLoggingIn ? 'Redirecting...' : 'Sign in with GitHub'}
-            </button>
-          </div>
-        ) : (
-          <div className="border border-white/[0.08] bg-white/[0.02] rounded-xl p-8 shadow-[0_0_30px_rgba(255,255,255,0.02)]">
-            
-            {message && (
-              <div className="bg-emerald-500/10 text-emerald-400 p-4 rounded-md mb-8 border border-emerald-500/20 text-sm">
-                {message}
-              </div>
-            )}
-            
-            {error && (
-              <div className="bg-red-500/10 text-red-400 p-4 rounded-md mb-8 border border-red-500/20 text-sm">
-                {error}
-              </div>
-            )}
+            <p className="text-gray-400">
+              Your <code>package.json</code> <strong>must</strong> include the following structure:
+            </p>
+            <div className="bg-black border border-white/[0.08] rounded-md p-4 overflow-x-auto text-sm text-gray-300">
+              <pre>
+{`{
+  "name": "my-awesome-theme",
+  "version": "1.0.0",
+  "description": "A beautiful dark mode theme",
+  "nextjscms": {
+    "type": "theme" // or "plugin"
+  }
+}`}
+              </pre>
+            </div>
+            <div className="bg-emerald-500/10 text-emerald-400 p-4 rounded-md border border-emerald-500/20 text-sm">
+              <strong>Important:</strong> We map packages directly to the verified GitHub account of the user who published it.
+            </div>
+          </section>
 
-            <form onSubmit={handleSubmit} className="space-y-6">
-              
-              <div className="space-y-2">
-                <label className="block text-sm font-medium text-gray-300">Package Type</label>
-                <select name="type" required className="w-full bg-black border border-white/[0.1] rounded-md p-3 text-white focus:outline-none focus:border-white/[0.3] transition-colors">
-                  <option value="theme">Theme</option>
-                  <option value="plugin">Plugin</option>
-                </select>
-              </div>
+          {/* Packaging */}
+          <section className="space-y-4">
+            <h2 className="text-2xl font-bold border-b border-white/[0.08] pb-2 text-gray-200">2. Packaging your code</h2>
+            <p className="text-gray-400">
+              We rely on standard NPM tools for packaging. When you are ready to publish, navigate to your package directory in the terminal and run:
+            </p>
+            <div className="bg-black border border-white/[0.08] rounded-md p-4 text-sm text-gray-300">
+              <pre>npm pack</pre>
+            </div>
+            <p className="text-gray-400">
+              This will generate a <code>.tgz</code> file (e.g., <code>my-awesome-theme-1.0.0.tgz</code>) in that folder. This single tarball contains all of your package's code.
+            </p>
+          </section>
 
-              <div className="space-y-2">
-                <label className="block text-sm font-medium text-gray-300">Package Tarball (.tar.gz)</label>
-                <input 
-                  type="file" 
-                  name="file" 
-                  accept=".tgz,.tar.gz" 
-                  required 
-                  className="w-full bg-black border border-white/[0.1] rounded-md p-2 text-sm text-gray-400 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-medium file:bg-white/[0.05] file:text-white hover:file:bg-white/[0.1] cursor-pointer"
-                />
-                <p className="text-xs text-gray-500 pt-1">
-                  Run <code>npm pack</code> in your theme folder to generate this file. Max 4MB.
-                </p>
-              </div>
+          {/* Publishing */}
+          <section className="space-y-4">
+            <h2 className="text-2xl font-bold border-b border-white/[0.08] pb-2 text-gray-200">3. Publishing to the Marketplace</h2>
+            <p className="text-gray-400">
+              Once you have your <code>.tgz</code> tarball, head over to the <a href="/upload" className="text-blue-400 hover:underline">Upload Portal</a>.
+            </p>
+            <ol className="list-decimal list-inside text-gray-400 space-y-2">
+              <li><strong>Sign In</strong> using your GitHub account.</li>
+              <li>Select whether you are publishing a <strong>Theme</strong> or a <strong>Plugin</strong>.</li>
+              <li>Upload your generated <code>.tgz</code> file.</li>
+              <li>(Optional) Provide an image URL for a thumbnail to make your package pop on the marketplace!</li>
+              <li>Click <strong>Publish to Marketplace</strong>.</li>
+            </ol>
+            <p className="text-gray-400 pt-2">
+              Our API will automatically decompress your package, read your <code>package.json</code>, verify your identity, and list your new version globally on the NextjsCMS Marketplace!
+            </p>
+          </section>
 
-              <div className="space-y-2">
-                <label className="block text-sm font-medium text-gray-300">Thumbnail URL (Optional)</label>
-                <input 
-                  type="url" 
-                  name="imageUrl" 
-                  placeholder="https://example.com/thumbnail.png"
-                  className="w-full bg-black border border-white/[0.1] rounded-md p-3 text-white placeholder-gray-600 focus:outline-none focus:border-white/[0.3] transition-colors text-sm"
-                />
-              </div>
+          {/* Installation */}
+          <section className="space-y-4">
+            <h2 className="text-2xl font-bold border-b border-white/[0.08] pb-2 text-gray-200">4. Installing from the Marketplace</h2>
+            <p className="text-gray-400">
+              CMS site owners can install your package by visiting their CMS Admin Dashboard, navigating to the Themes or Plugins tab, and browsing the global directory.
+            </p>
+          </section>
 
-              <div className="pt-4 border-t border-white/[0.08]">
-                <button 
-                  type="submit" 
-                  disabled={loading}
-                  className="w-full bg-white hover:bg-gray-200 text-black font-semibold py-3 px-4 rounded-md disabled:opacity-50 transition-all flex justify-center items-center gap-2"
-                >
-                  {loading ? (
-                    <>
-                      <span className="flex h-2 w-2 rounded-full bg-black animate-ping" />
-                      Publishing...
-                    </>
-                  ) : (
-                    'Publish to Marketplace'
-                  )}
-                </button>
-              </div>
-              
-            </form>
-          </div>
-        )}
+        </div>
       </main>
     </div>
   );
