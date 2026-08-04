@@ -52,11 +52,11 @@ export async function POST(request: Request) {
     fs.mkdirSync(extractDir, { recursive: true });
     fs.writeFileSync(tarPath, buffer);
 
-    // Extract package.json and README.md to read metadata
+    // Extract package.json to read metadata
     await tar.x({
       file: tarPath,
       cwd: extractDir,
-      filter: (p) => p === 'package/package.json' || p.toLowerCase() === 'package/readme.md'
+      filter: (p) => p === 'package/package.json'
     });
 
     const packageJsonPath = path.join(extractDir, 'package', 'package.json');
@@ -69,19 +69,6 @@ export async function POST(request: Request) {
 
     if (!name || !version) {
       throw new Error('package.json must contain a "name" and "version" field.');
-    }
-
-    let readmeContent = '';
-    const readmePaths = [
-      path.join(extractDir, 'package', 'README.md'),
-      path.join(extractDir, 'package', 'readme.md'),
-      path.join(extractDir, 'package', 'Readme.md')
-    ];
-    for (const p of readmePaths) {
-      if (fs.existsSync(p)) {
-        readmeContent = fs.readFileSync(p, 'utf-8');
-        break;
-      }
     }
 
     // Prepare GitHub Packages auth
@@ -120,28 +107,26 @@ export async function POST(request: Request) {
 
       if (type === 'theme') {
         await sql`
-          INSERT INTO marketplace_themes (slug, name, description, image_url, version, author, download_url, readme, updated_at)
-          VALUES (${slug}, ${name}, ${description || ''}, ${imageUrl}, ${version}, ${authorStr}, ${downloadUrl}, ${readmeContent}, NOW())
+          INSERT INTO marketplace_themes (slug, name, description, image_url, version, author, download_url, updated_at)
+          VALUES (${slug}, ${name}, ${description || ''}, ${imageUrl}, ${version}, ${authorStr}, ${downloadUrl}, NOW())
           ON CONFLICT (slug) DO UPDATE SET
             version = EXCLUDED.version,
             description = EXCLUDED.description,
             image_url = EXCLUDED.image_url,
             author = EXCLUDED.author,
             download_url = EXCLUDED.download_url,
-            readme = EXCLUDED.readme,
             updated_at = NOW()
         `;
       } else {
         await sql`
-          INSERT INTO marketplace_plugins (slug, name, description, image_url, version, author, download_url, readme, updated_at)
-          VALUES (${slug}, ${name}, ${description || ''}, ${imageUrl}, ${version}, ${authorStr}, ${downloadUrl}, ${readmeContent}, NOW())
+          INSERT INTO marketplace_plugins (slug, name, description, image_url, version, author, download_url, updated_at)
+          VALUES (${slug}, ${name}, ${description || ''}, ${imageUrl}, ${version}, ${authorStr}, ${downloadUrl}, NOW())
           ON CONFLICT (slug) DO UPDATE SET
             version = EXCLUDED.version,
             description = EXCLUDED.description,
             image_url = EXCLUDED.image_url,
             author = EXCLUDED.author,
             download_url = EXCLUDED.download_url,
-            readme = EXCLUDED.readme,
             updated_at = NOW()
         `;
       }

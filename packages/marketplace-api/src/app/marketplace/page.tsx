@@ -1,5 +1,7 @@
 import { neon } from '@neondatabase/serverless';
 import Link from 'next/link';
+import { MarketItem } from '@/components/MarketItem';
+import { fetchGithubAuthor } from '@/lib/github';
 
 export const dynamic = 'force-dynamic';
 
@@ -15,7 +17,7 @@ async function fetchMarketplaceData(query: string, category: string, sort: strin
 
   if (category === 'all' || category === 'themes') {
     themes = await sql`
-      SELECT slug, name, description, image_url, version, author, updated_at, 'theme' as type
+      SELECT slug, name, description, image_url, version, author, updated_at, stars_count, installs_count, 'theme' as type
       FROM marketplace_themes
       WHERE name ILIKE ${searchPattern} OR description ILIKE ${searchPattern} OR slug ILIKE ${searchPattern}
     `;
@@ -23,13 +25,13 @@ async function fetchMarketplaceData(query: string, category: string, sort: strin
   
   if (category === 'all' || category === 'plugins') {
     plugins = await sql`
-      SELECT slug, name, description, image_url, version, author, updated_at, 'plugin' as type
+      SELECT slug, name, description, image_url, version, author, updated_at, stars_count, installs_count, 'plugin' as type
       FROM marketplace_plugins
       WHERE name ILIKE ${searchPattern} OR description ILIKE ${searchPattern} OR slug ILIKE ${searchPattern}
     `;
   }
 
-  const allItems = [...themes, ...plugins];
+  let allItems = [...themes, ...plugins];
 
   if (sort === 'updated') {
     allItems.sort((a, b) => new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime());
@@ -37,6 +39,12 @@ async function fetchMarketplaceData(query: string, category: string, sort: strin
     // Default alphabetical for relevance
     allItems.sort((a, b) => a.name.localeCompare(b.name));
   }
+  
+  // Fetch real authors from GitHub Packages
+  allItems = await Promise.all(allItems.map(async item => ({
+    ...item,
+    author: await fetchGithubAuthor(item.name, item.author)
+  })));
 
   return allItems;
 }
@@ -77,7 +85,7 @@ export default async function MarketplacePage({
       </div>
 
       {/* Main Content Area */}
-      <div className="flex-1 flex max-w-7xl w-full mx-auto px-8 py-8 gap-10">
+      <div className="flex-1 flex max-w-6xl w-full mx-auto px-8 py-8 gap-10">
         
         {/* Left Sidebar (Filters) */}
         <aside className="w-56 flex-shrink-0">
@@ -85,8 +93,11 @@ export default async function MarketplacePage({
             
             {/* Categories */}
             <div>
-              <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-4">Categories</h3>
-              <ul className="space-y-2">
+              <h3 className="text-sm font-semibold text-white mb-3 flex items-center gap-2">
+                <svg className="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" /></svg>
+                Categories
+              </h3>
+              <ul className="space-y-1">
                 {[
                   { id: 'all', label: 'All categories' },
                   { id: 'themes', label: 'Themes' },
@@ -95,10 +106,10 @@ export default async function MarketplacePage({
                   <li key={cat.id}>
                     <Link 
                       href={`/marketplace?q=${encodeURIComponent(q)}&category=${cat.id}&sort=${sort}`}
-                      className={`block px-3 py-1.5 rounded-md text-sm transition-colors ${
+                      className={`block px-3 py-2 -ml-3 rounded-md text-sm transition-colors ${
                         category === cat.id 
                           ? 'bg-emerald-500/10 text-emerald-400 font-medium' 
-                          : 'text-gray-400 hover:bg-white/[0.05] hover:text-white'
+                          : 'text-gray-400 hover:text-gray-200 hover:bg-white/[0.05]'
                       }`}
                     >
                       {cat.label}
@@ -109,9 +120,12 @@ export default async function MarketplacePage({
             </div>
 
             {/* Sort By */}
-            <div>
-              <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-4">Sort By</h3>
-              <ul className="space-y-2">
+            <div className="pt-6 border-t border-white/[0.05]">
+              <h3 className="text-sm font-semibold text-white mb-3 flex items-center gap-2">
+                <svg className="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 4h13M3 8h9m-9 4h6m4 0l4-4m0 0l4 4m-4-4v12" /></svg>
+                Sort By
+              </h3>
+              <ul className="space-y-1">
                 {[
                   { id: 'relevance', label: 'Relevance' },
                   { id: 'updated', label: 'Recently Updated' }
@@ -119,10 +133,10 @@ export default async function MarketplacePage({
                   <li key={s.id}>
                     <Link 
                       href={`/marketplace?q=${encodeURIComponent(q)}&category=${category}&sort=${s.id}`}
-                      className={`block px-3 py-1.5 rounded-md text-sm transition-colors ${
+                      className={`block px-3 py-2 -ml-3 rounded-md text-sm transition-colors ${
                         sort === s.id 
                           ? 'bg-emerald-500/10 text-emerald-400 font-medium' 
-                          : 'text-gray-400 hover:bg-white/[0.05] hover:text-white'
+                          : 'text-gray-400 hover:text-gray-200 hover:bg-white/[0.05]'
                       }`}
                     >
                       {s.label}
@@ -143,51 +157,14 @@ export default async function MarketplacePage({
             </h2>
           </div>
 
-          <div className="space-y-4">
+          <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
             {items.length === 0 ? (
-              <div className="text-center py-12 text-gray-500">
+              <div className="col-span-full text-center py-12 text-gray-500">
                 No results found. Try adjusting your search or filters.
               </div>
             ) : (
               items.map((item) => (
-                <div key={item.slug} className="flex gap-4 p-4 rounded-lg bg-[#161b22] border border-white/[0.05] hover:border-emerald-500/30 transition-colors group">
-                  {/* Icon */}
-                  <div className="w-16 h-16 rounded-md overflow-hidden bg-[#0d1117] border border-white/[0.05] flex-shrink-0 flex items-center justify-center">
-                    {item.image_url ? (
-                      <img src={item.image_url} alt={item.name} className="w-full h-full object-cover" />
-                    ) : (
-                      <span className="text-2xl">{item.type === 'theme' ? '🎨' : '⚡'}</span>
-                    )}
-                  </div>
-                  
-                  {/* Details */}
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-start justify-between gap-4">
-                      <div>
-                        <h3 className="text-base font-medium text-blue-400 group-hover:text-blue-300 transition-colors">
-                          <Link href={`/marketplace/${item.type}/${item.slug}`} className="hover:underline">{item.name}</Link>
-                        </h3>
-                        <div className="flex items-center gap-2 mt-1 text-xs text-gray-400">
-                          <span>{item.author}</span>
-                          <span className="w-1 h-1 rounded-full bg-gray-600"></span>
-                          <span>v{item.version}</span>
-                          <span className="w-1 h-1 rounded-full bg-gray-600"></span>
-                          <span className="capitalize">{item.type}</span>
-                        </div>
-                      </div>
-                      
-                      <div className="flex flex-col items-end">
-                        <button className="px-3 py-1 bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 hover:bg-emerald-500 hover:text-white rounded text-xs font-medium transition-all">
-                          Install
-                        </button>
-                      </div>
-                    </div>
-                    
-                    <p className="mt-2 text-sm text-gray-300 line-clamp-2 leading-relaxed">
-                      {item.description}
-                    </p>
-                  </div>
-                </div>
+                <MarketItem key={item.slug} item={item} />
               ))
             )}
           </div>

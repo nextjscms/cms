@@ -3,8 +3,8 @@ export default function Loading() {
     <div className="flex-1 flex flex-col font-sans animate-pulse">
       
       {/* Header Banner */}
-      <div className="bg-[#161b22] border-b border-white/[0.08] px-8 py-10 flex flex-col items-center">
-        <div className="max-w-5xl w-full flex items-start gap-6">
+      <div className="bg-[#161b22] border-b border-white/[0.08]">
+        <div className="max-w-6xl w-full mx-auto px-8 py-10 flex items-start gap-6">
           <div className="w-24 h-24 rounded-lg bg-white/[0.05] flex-shrink-0"></div>
 
           <div className="flex-1 min-w-0 pt-2">
@@ -23,7 +23,7 @@ export default function Loading() {
 
       {/* Tabs */}
       <div className="border-b border-white/[0.08] bg-[#161b22]">
-        <div className="max-w-5xl w-full mx-auto px-8 flex gap-8">
+        <div className="max-w-6xl w-full mx-auto px-8 flex gap-8">
           <div className="px-1 py-4"><div className="h-5 w-20 bg-white/[0.05] rounded"></div></div>
           <div className="px-1 py-4"><div className="h-5 w-28 bg-white/[0.05] rounded"></div></div>
           <div className="px-1 py-4"><div className="h-5 w-16 bg-white/[0.05] rounded"></div></div>
@@ -31,7 +31,7 @@ export default function Loading() {
       </div>
 
       {/* Main Content */}
-      <div className="flex-1 flex max-w-5xl w-full mx-auto px-8 py-10 gap-16">
+      <div className="flex-1 flex max-w-6xl w-full mx-auto px-8 py-10 gap-16">
         <main className="flex-1 min-w-0">
           <div className="space-y-4">
             <div className="h-6 w-48 bg-white/[0.05] rounded mb-8"></div>

@@ -1,4 +1,7 @@
 import { neon } from '@neondatabase/serverless';
+import Link from 'next/link';
+import { MarketItem } from '@/components/MarketItem';
+import { fetchGithubAuthor } from '@/lib/github';
 
 export default async function Home() {
   let stars = 0;
@@ -30,10 +33,21 @@ export default async function Home() {
   }
 
   try {
-    if (process.env.DATABASE_URL) {
-      const sql = neon(process.env.DATABASE_URL);
-      themes = await sql`SELECT * FROM marketplace_themes ORDER BY updated_at DESC LIMIT 6`;
-      plugins = await sql`SELECT * FROM marketplace_plugins ORDER BY updated_at DESC LIMIT 6`;
+    const dbUrl = process.env.MARKETPLACE_DB_URL || process.env.DATABASE_URL;
+    if (dbUrl) {
+      const sql = neon(dbUrl);
+      themes = await sql`SELECT *, 'theme' as type FROM marketplace_themes ORDER BY updated_at DESC LIMIT 6`;
+      plugins = await sql`SELECT *, 'plugin' as type FROM marketplace_plugins ORDER BY updated_at DESC LIMIT 6`;
+      
+      // Fetch real authors from GitHub Packages
+      themes = await Promise.all(themes.map(async t => ({
+        ...t,
+        author: await fetchGithubAuthor(t.name, t.author)
+      })));
+      plugins = await Promise.all(plugins.map(async p => ({
+        ...p,
+        author: await fetchGithubAuthor(p.name, p.author)
+      })));
     }
   } catch(e) {
     console.error('Failed to fetch from db:', e);
@@ -119,32 +133,7 @@ export default async function Home() {
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {themes.map((theme) => (
-                  <div key={theme.slug} className="group rounded-xl border border-white/[0.08] bg-white/[0.02] hover:bg-white/[0.04] transition-all overflow-hidden flex flex-col">
-                    <div className="aspect-video bg-black/50 border-b border-white/[0.08] relative">
-                      {theme.image_url ? (
-                        <img src={theme.image_url} alt={theme.name} className="w-full h-full object-cover" />
-                      ) : (
-                        <div className="w-full h-full flex items-center justify-center text-gray-700">No preview</div>
-                      )}
-                      <div className="absolute top-3 right-3 bg-black/80 backdrop-blur-sm text-xs font-mono px-2 py-1 rounded-md border border-white/10">
-                        v{theme.version}
-                      </div>
-                    </div>
-                    <div className="p-5 flex-1 flex flex-col">
-                      <h4 className="text-lg font-bold mb-1">{theme.name}</h4>
-                      <p className="text-sm text-gray-400 mb-4 line-clamp-2 flex-1">{theme.description}</p>
-                      
-                      <div className="flex items-center justify-between mt-auto pt-4 border-t border-white/[0.08]">
-                        <div className="flex items-center gap-2">
-                          <img src={`https://github.com/${theme.author}.png`} alt={theme.author} className="w-6 h-6 rounded-full" />
-                          <span className="text-sm text-gray-300">@{theme.author}</span>
-                        </div>
-                        <div className="text-xs font-mono bg-white/[0.05] px-2 py-1 rounded text-gray-400 cursor-copy hover:text-white transition-colors title='Copy install ID'">
-                          {theme.slug}
-                        </div>
-                      </div>
-                    </div>
-                  </div>
+                  <MarketItem key={theme.slug} item={theme} />
                 ))}
               </div>
             )}
@@ -167,25 +156,7 @@ export default async function Home() {
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {plugins.map((plugin) => (
-                  <div key={plugin.slug} className="group rounded-xl border border-white/[0.08] bg-white/[0.02] hover:bg-white/[0.04] transition-all overflow-hidden flex flex-col">
-                    <div className="p-5 flex-1 flex flex-col">
-                      <div className="flex justify-between items-start mb-2">
-                        <h4 className="text-lg font-bold">{plugin.name}</h4>
-                        <span className="text-xs font-mono bg-black/50 px-2 py-1 rounded-md border border-white/10">v{plugin.version}</span>
-                      </div>
-                      <p className="text-sm text-gray-400 mb-6 line-clamp-3 flex-1">{plugin.description}</p>
-                      
-                      <div className="flex items-center justify-between mt-auto pt-4 border-t border-white/[0.08]">
-                        <div className="flex items-center gap-2">
-                          <img src={`https://github.com/${plugin.author}.png`} alt={plugin.author} className="w-6 h-6 rounded-full" />
-                          <span className="text-sm text-gray-300">@{plugin.author}</span>
-                        </div>
-                        <div className="text-xs font-mono bg-white/[0.05] px-2 py-1 rounded text-gray-400 cursor-copy hover:text-white transition-colors title='Copy install ID'">
-                          {plugin.slug}
-                        </div>
-                      </div>
-                    </div>
-                  </div>
+                  <MarketItem key={plugin.slug} item={plugin} />
                 ))}
               </div>
             )}
