@@ -5,13 +5,13 @@
     "requireCleanWorkingDir": false
   },
   "github": {
-    "release": true,
-    "web": true
+    "release": false
   },
   "npm": {
     "publish": false
   },
   "hooks": {
-    "after:bump": "npm version ${version} --workspace=packages/core --no-git-tag-version"
+    "after:bump": "npm version ${version} --workspace=packages/core --no-git-tag-version",
+    "after:release": "gh release create v${version} --generate-notes"
   }
 }
