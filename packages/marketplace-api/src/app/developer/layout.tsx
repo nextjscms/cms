@@ -20,7 +20,8 @@ const sidebarLinks = [
   {
     title: 'Distribution',
     links: [
-      { name: 'Publishing', href: '/developer/publishing' }
+      { name: 'Publishing', href: '/developer/publishing' },
+      { name: 'Upload Portal', href: '/upload' }
     ]
   }
 ];
@@ -29,9 +30,9 @@ export default function DeveloperDocsLayout({ children }: { children: React.Reac
   const pathname = usePathname();
 
   return (
-    <div className="flex-1 flex max-w-[1400px] w-full mx-auto font-sans text-gray-200">
+    <div className="flex-1 flex max-w-6xl w-full mx-auto font-sans text-gray-200 px-8">
       {/* Sidebar */}
-      <aside className="w-64 flex-shrink-0 hidden md:block border-r border-white/[0.08] min-h-[calc(100vh-80px)] py-10 pl-8 pr-6 sticky top-0 overflow-y-auto">
+      <aside className="w-56 flex-shrink-0 hidden md:block border-r border-white/[0.08] h-[calc(100vh-81px)] py-10 pr-6 sticky top-[81px] overflow-y-auto">
         <div className="space-y-8">
           {sidebarLinks.map((section) => (
             <div key={section.title}>
@@ -61,7 +62,7 @@ export default function DeveloperDocsLayout({ children }: { children: React.Reac
       </aside>
 
       {/* Main Content */}
-      <main className="flex-1 min-w-0 py-12 px-8 md:px-16 lg:px-24 xl:px-32">
+      <main className="flex-1 min-w-0 py-12 pl-12 pr-4">
         <div className="max-w-3xl prose prose-invert prose-emerald prose-headings:text-white prose-p:text-gray-400 prose-a:text-emerald-400 hover:prose-a:text-emerald-300 prose-code:text-emerald-300 prose-pre:bg-[#0a0a0a] prose-pre:border prose-pre:border-white/[0.08] prose-hr:border-white/[0.08]">
           {children}
         </div>
