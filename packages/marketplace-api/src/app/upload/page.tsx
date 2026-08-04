@@ -51,7 +51,7 @@ export default function UploadThemePage() {
   const handleLogin = () => {
     // Redirect to the API oauth authorize route with this page as the return URL
     const returnUrl = encodeURIComponent(window.location.href);
-    window.location.href = `/api/auth/github/authorize?returnUrl=${returnUrl}`;
+    window.location.href = `/api/auth/github/authorize?return_url=${returnUrl}`;
   };
 
   const handleLogout = () => {
