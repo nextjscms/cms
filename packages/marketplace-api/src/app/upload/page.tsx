@@ -1,14 +1,69 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 
 export default function UploadThemePage() {
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState('');
   const [error, setError] = useState('');
+  
+  // Auth state
+  const [token, setToken] = useState<string | null>(null);
+  const [user, setUser] = useState<{ login: string, avatar_url: string } | null>(null);
+  const [isCheckingAuth, setIsCheckingAuth] = useState(true);
+
+  useEffect(() => {
+    // Check URL for token (from OAuth callback)
+    const urlParams = new URLSearchParams(window.location.search);
+    const urlToken = urlParams.get('github_token');
+    
+    let activeToken = urlToken || localStorage.getItem('github_token');
+
+    if (urlToken) {
+      localStorage.setItem('github_token', urlToken);
+      // Clean up URL
+      window.history.replaceState({}, document.title, window.location.pathname);
+    }
+
+    if (activeToken) {
+      setToken(activeToken);
+      // Verify token with GitHub
+      fetch('https://api.github.com/user', {
+        headers: { Authorization: `Bearer ${activeToken}` }
+      })
+      .then(res => {
+        if (!res.ok) throw new Error('Invalid token');
+        return res.json();
+      })
+      .then(data => {
+        setUser(data);
+      })
+      .catch(() => {
+        localStorage.removeItem('github_token');
+        setToken(null);
+      })
+      .finally(() => setIsCheckingAuth(false));
+    } else {
+      setIsCheckingAuth(false);
+    }
+  }, []);
+
+  const handleLogin = () => {
+    // Redirect to the API oauth authorize route with this page as the return URL
+    const returnUrl = encodeURIComponent(window.location.href);
+    window.location.href = `/api/auth/github/authorize?returnUrl=${returnUrl}`;
+  };
+
+  const handleLogout = () => {
+    localStorage.removeItem('github_token');
+    setToken(null);
+    setUser(null);
+  };
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    if (!token) return;
+
     setLoading(true);
     setMessage('');
     setError('');
@@ -18,6 +73,9 @@ export default function UploadThemePage() {
     try {
       const response = await fetch('/api/upload', {
         method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`
+        },
         body: formData,
       });
 
@@ -27,7 +85,7 @@ export default function UploadThemePage() {
         throw new Error(data.error || 'Failed to upload theme');
       }
 
-      setMessage(`Success! Version ${data.version} published to GitHub Packages and listed in the Marketplace.`);
+      setMessage(`Success! Version ${data.version} published and listed by @${user?.login}.`);
       (e.target as HTMLFormElement).reset();
     } catch (err: any) {
       setError(err.message);
@@ -36,66 +94,134 @@ export default function UploadThemePage() {
     }
   };
 
+  if (isCheckingAuth) {
+    return (
+      <div className="min-h-screen bg-black flex items-center justify-center text-white">
+        <div className="animate-pulse">Loading secure environment...</div>
+      </div>
+    );
+  }
+
   return (
-    <div className="max-w-2xl mx-auto py-12 px-6">
-      <h1 className="text-3xl font-bold text-slate-900 mb-2">Publish to Marketplace</h1>
-      <p className="text-slate-600 mb-8">
-        Upload your .tar.gz file here. This will automatically publish it to GitHub Packages and list it in the NextjsCMS Marketplace.
-      </p>
-
-      {message && (
-        <div className="bg-emerald-50 text-emerald-700 p-4 rounded-md mb-6 border border-emerald-200">
-          {message}
-        </div>
-      )}
+    <div className="min-h-screen bg-black font-sans text-white selection:bg-white/30 selection:text-white pb-24">
       
-      {error && (
-        <div className="bg-red-50 text-red-700 p-4 rounded-md mb-6 border border-red-200">
-          {error}
+      {/* Navigation */}
+      <nav className="flex items-center justify-between px-8 py-6 max-w-6xl mx-auto w-full border-b border-white/[0.08]">
+        <div className="flex items-center gap-3">
+          <div className="w-8 h-8 rounded-full bg-white flex items-center justify-center">
+            <svg className="w-5 h-5 text-black" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M13 10V3L4 14h7v7l9-11h-7z" />
+            </svg>
+          </div>
+          <span className="text-xl font-bold tracking-tight">NextjsCMS</span>
         </div>
-      )}
-
-      <form onSubmit={handleSubmit} className="space-y-6">
-        <div className="space-y-2">
-          <label className="block text-sm font-medium text-slate-700">Type</label>
-          <select name="type" required className="w-full border border-slate-300 rounded-md p-2">
-            <option value="theme">Theme</option>
-            <option value="plugin">Plugin</option>
-          </select>
+        <div className="flex gap-8 text-sm font-medium text-gray-400 items-center">
+          <a href="/" className="hover:text-white transition-colors">Home</a>
+          {user && (
+            <div className="flex items-center gap-3 border-l border-white/[0.1] pl-6 ml-2">
+              <img src={user.avatar_url} alt="Avatar" className="w-6 h-6 rounded-full" />
+              <span className="text-white">{user.login}</span>
+              <button onClick={handleLogout} className="text-xs hover:text-white ml-2 text-gray-500">Log out</button>
+            </div>
+          )}
         </div>
+      </nav>
 
-        <div className="space-y-2">
-          <label className="block text-sm font-medium text-slate-700">Package Tarball (.tar.gz)</label>
-          <input 
-            type="file" 
-            name="file" 
-            accept=".tgz,.tar.gz" 
-            required 
-            className="w-full border border-slate-300 rounded-md p-2"
-          />
-          <p className="text-xs text-slate-500">
-            Generate this file by running <code>npm pack</code> inside your theme folder. Must be under 4MB.
+      <main className="max-w-2xl mx-auto pt-16 px-6">
+        
+        <div className="mb-10 text-center">
+          <h1 className="text-4xl font-extrabold tracking-tight mb-3">Publish Package</h1>
+          <p className="text-gray-400 font-light text-lg">
+            Upload your compiled <code>.tar.gz</code> to the NextjsCMS Marketplace.
           </p>
         </div>
 
-        <div className="space-y-2">
-          <label className="block text-sm font-medium text-slate-700">Image URL (Optional Thumbnail)</label>
-          <input 
-            type="url" 
-            name="imageUrl" 
-            placeholder="https://example.com/thumbnail.png"
-            className="w-full border border-slate-300 rounded-md p-2"
-          />
-        </div>
+        {!user ? (
+          <div className="border border-white/[0.08] bg-white/[0.02] rounded-xl p-12 text-center shadow-[0_0_30px_rgba(255,255,255,0.02)]">
+            <svg className="w-12 h-12 text-gray-500 mx-auto mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8V7a4 4 0 00-8 0v4h8z" />
+            </svg>
+            <h2 className="text-xl font-semibold mb-2">Authentication Required</h2>
+            <p className="text-gray-400 text-sm mb-6 max-w-md mx-auto">
+              You must be logged in with GitHub to publish themes and plugins. Your GitHub handle will be publicly listed as the author.
+            </p>
+            <button 
+              onClick={handleLogin}
+              className="bg-white text-black hover:bg-gray-200 px-6 py-2.5 rounded-md font-medium transition-all"
+            >
+              Sign in with GitHub
+            </button>
+          </div>
+        ) : (
+          <div className="border border-white/[0.08] bg-white/[0.02] rounded-xl p-8 shadow-[0_0_30px_rgba(255,255,255,0.02)]">
+            
+            {message && (
+              <div className="bg-emerald-500/10 text-emerald-400 p-4 rounded-md mb-8 border border-emerald-500/20 text-sm">
+                {message}
+              </div>
+            )}
+            
+            {error && (
+              <div className="bg-red-500/10 text-red-400 p-4 rounded-md mb-8 border border-red-500/20 text-sm">
+                {error}
+              </div>
+            )}
 
-        <button 
-          type="submit" 
-          disabled={loading}
-          className="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-md disabled:opacity-50 transition-colors"
-        >
-          {loading ? 'Publishing...' : 'Publish Package'}
-        </button>
-      </form>
+            <form onSubmit={handleSubmit} className="space-y-6">
+              
+              <div className="space-y-2">
+                <label className="block text-sm font-medium text-gray-300">Package Type</label>
+                <select name="type" required className="w-full bg-black border border-white/[0.1] rounded-md p-3 text-white focus:outline-none focus:border-white/[0.3] transition-colors">
+                  <option value="theme">Theme</option>
+                  <option value="plugin">Plugin</option>
+                </select>
+              </div>
+
+              <div className="space-y-2">
+                <label className="block text-sm font-medium text-gray-300">Package Tarball (.tar.gz)</label>
+                <input 
+                  type="file" 
+                  name="file" 
+                  accept=".tgz,.tar.gz" 
+                  required 
+                  className="w-full bg-black border border-white/[0.1] rounded-md p-2 text-sm text-gray-400 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-medium file:bg-white/[0.05] file:text-white hover:file:bg-white/[0.1] cursor-pointer"
+                />
+                <p className="text-xs text-gray-500 pt-1">
+                  Run <code>npm pack</code> in your theme folder to generate this file. Max 4MB.
+                </p>
+              </div>
+
+              <div className="space-y-2">
+                <label className="block text-sm font-medium text-gray-300">Thumbnail URL (Optional)</label>
+                <input 
+                  type="url" 
+                  name="imageUrl" 
+                  placeholder="https://example.com/thumbnail.png"
+                  className="w-full bg-black border border-white/[0.1] rounded-md p-3 text-white placeholder-gray-600 focus:outline-none focus:border-white/[0.3] transition-colors text-sm"
+                />
+              </div>
+
+              <div className="pt-4 border-t border-white/[0.08]">
+                <button 
+                  type="submit" 
+                  disabled={loading}
+                  className="w-full bg-white hover:bg-gray-200 text-black font-semibold py-3 px-4 rounded-md disabled:opacity-50 transition-all flex justify-center items-center gap-2"
+                >
+                  {loading ? (
+                    <>
+                      <span className="flex h-2 w-2 rounded-full bg-black animate-ping" />
+                      Publishing...
+                    </>
+                  ) : (
+                    'Publish to Marketplace'
+                  )}
+                </button>
+              </div>
+              
+            </form>
+          </div>
+        )}
+      </main>
     </div>
   );
 }

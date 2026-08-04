@@ -11,6 +11,23 @@ const execPromise = util.promisify(exec);
 
 export async function POST(request: Request) {
   try {
+    const authHeader = request.headers.get('authorization');
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      return NextResponse.json({ error: 'Unauthorized. Please login with GitHub first.' }, { status: 401 });
+    }
+
+    const userToken = authHeader.split(' ')[1];
+    const ghUserRes = await fetch('https://api.github.com/user', {
+      headers: { Authorization: `Bearer ${userToken}` }
+    });
+
+    if (!ghUserRes.ok) {
+      return NextResponse.json({ error: 'Invalid or expired GitHub session.' }, { status: 401 });
+    }
+    
+    const ghUser = await ghUserRes.json();
+    const verifiedAuthor = ghUser.login;
+
     const formData = await request.formData();
     const type = formData.get('type') as string;
     const file = formData.get('file') as File;
@@ -85,8 +102,8 @@ export async function POST(request: Request) {
       const sql = neon(dbUrl);
       const slug = name.replace('@nextjscms/', '').replace('theme-', '').replace('plugin-', '');
       const downloadUrl = `https://npm.pkg.github.com/${name}/-/${name.split('/')[1]}-${version}.tgz`;
-      
-      const authorStr = typeof author === 'string' ? author : (author?.name || 'Unknown');
+      // Overwrite the author with the verified GitHub identity
+      const authorStr = verifiedAuthor;
 
       if (type === 'theme') {
         await sql`
