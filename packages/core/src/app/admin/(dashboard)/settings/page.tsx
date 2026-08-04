@@ -29,7 +29,7 @@ export default async function SettingsPage() {
   }
 
   return (
-    <div className="space-y-6 max-w-4xl">
+    <div className="space-y-6 max-w-4xl mx-auto">
       <div>
         <h1 className="text-3xl font-bold tracking-tight text-slate-900">Settings</h1>
         <p className="text-slate-500 mt-1">Manage your site configuration.</p>
