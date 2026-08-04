@@ -22,6 +22,7 @@ export default function Navbar() {
         </Link>
       </div>
       <div className="flex gap-8 text-sm font-medium items-center">
+        <Link href="/marketplace" className="text-gray-400 hover:text-white transition-colors">Marketplace</Link>
         <Link href="/#showcase" className="text-gray-400 hover:text-white transition-colors">Showcase</Link>
         <Link 
           href="/developer" 
