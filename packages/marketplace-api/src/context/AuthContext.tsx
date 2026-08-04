@@ -11,6 +11,7 @@ type AuthContextType = {
   token: string | null;
   user: User | null;
   isCheckingAuth: boolean;
+  isLoggingIn: boolean;
   login: () => void;
   logout: () => void;
 };
@@ -21,6 +22,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [token, setToken] = useState<string | null>(null);
   const [user, setUser] = useState<User | null>(null);
   const [isCheckingAuth, setIsCheckingAuth] = useState(true);
+  const [isLoggingIn, setIsLoggingIn] = useState(false);
 
   useEffect(() => {
     // Check URL for token (from OAuth callback)
@@ -59,6 +61,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const login = () => {
+    setIsLoggingIn(true);
     // Redirect to the API oauth authorize route with current page as the return URL
     const returnUrl = encodeURIComponent(window.location.href);
     window.location.href = `/api/auth/github/authorize?return_url=${returnUrl}`;
@@ -71,7 +74,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   return (
-    <AuthContext.Provider value={{ token, user, isCheckingAuth, login, logout }}>
+    <AuthContext.Provider value={{ token, user, isCheckingAuth, isLoggingIn, login, logout }}>
       {children}
     </AuthContext.Provider>
   );

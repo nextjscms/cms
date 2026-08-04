@@ -4,7 +4,7 @@ import { useAuth } from '../context/AuthContext';
 import Link from 'next/link';
 
 export default function Navbar() {
-  const { user, login, logout } = useAuth();
+  const { user, login, logout, isLoggingIn } = useAuth();
 
   return (
     <nav className="flex items-center justify-between px-8 py-6 max-w-6xl mx-auto w-full border-b border-white/[0.08]">
@@ -37,8 +37,9 @@ export default function Navbar() {
           </div>
         ) : (
           <div className="flex items-center border-l border-white/[0.1] pl-6 ml-2">
-            <button onClick={login} className="text-sm font-semibold hover:text-white transition-colors bg-white/[0.05] hover:bg-white/[0.1] px-4 py-1.5 rounded-full">
-              Sign in
+            <button onClick={login} disabled={isLoggingIn} className="text-sm font-semibold hover:text-white transition-all bg-white/[0.05] hover:bg-white/[0.1] px-4 py-1.5 rounded-full flex items-center gap-2 disabled:opacity-50">
+              {isLoggingIn && <span className="flex h-2.5 w-2.5 rounded-full bg-white animate-ping" />}
+              {isLoggingIn ? 'Redirecting...' : 'Sign in'}
             </button>
           </div>
         )}

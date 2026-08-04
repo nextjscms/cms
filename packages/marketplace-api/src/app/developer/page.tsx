@@ -74,9 +74,11 @@ export default function DeveloperPage() {
             </p>
             <button 
               onClick={login}
-              className="bg-white text-black hover:bg-gray-200 px-6 py-2.5 rounded-md font-medium transition-all"
+              disabled={isLoggingIn}
+              className="bg-white text-black hover:bg-gray-200 px-6 py-2.5 rounded-md font-medium transition-all flex justify-center items-center gap-2 mx-auto disabled:opacity-75"
             >
-              Sign in with GitHub
+              {isLoggingIn && <span className="flex h-3 w-3 rounded-full bg-black animate-ping" />}
+              {isLoggingIn ? 'Redirecting...' : 'Sign in with GitHub'}
             </button>
           </div>
         ) : (
