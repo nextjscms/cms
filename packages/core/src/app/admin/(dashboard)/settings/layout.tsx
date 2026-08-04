@@ -48,8 +48,8 @@ export default async function SettingsLayout({
   }
 
   return (
-    <div className="flex flex-col md:flex-row gap-6">
-      <aside className="w-full md:w-64 shrink-0">
+    <div className="flex flex-col md:flex-row gap-6 items-start">
+      <aside className="w-full md:w-64 shrink-0 md:sticky top-0">
         <h2 className="font-semibold text-lg mb-4">Settings</h2>
 
         <div className="space-y-6">
