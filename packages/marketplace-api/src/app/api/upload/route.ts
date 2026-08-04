@@ -88,22 +88,35 @@ export async function POST(request: Request) {
       
       const authorStr = typeof author === 'string' ? author : (author?.name || 'Unknown');
 
-      const tableName = type === 'theme' ? 'marketplace_themes' : 'marketplace_plugins';
-
-      await sql`
-        INSERT INTO ${sql(tableName)} (slug, name, description, image_url, version, author, download_url, updated_at)
-        VALUES (${slug}, ${name}, ${description || ''}, ${imageUrl}, ${version}, ${authorStr}, ${downloadUrl}, NOW())
-        ON CONFLICT (slug) DO UPDATE SET
-          version = EXCLUDED.version,
-          description = EXCLUDED.description,
-          image_url = EXCLUDED.image_url,
-          author = EXCLUDED.author,
-          download_url = EXCLUDED.download_url,
-          updated_at = NOW()
-      `;
+      if (type === 'theme') {
+        await sql`
+          INSERT INTO marketplace_themes (slug, name, description, image_url, version, author, download_url, updated_at)
+          VALUES (${slug}, ${name}, ${description || ''}, ${imageUrl}, ${version}, ${authorStr}, ${downloadUrl}, NOW())
+          ON CONFLICT (slug) DO UPDATE SET
+            version = EXCLUDED.version,
+            description = EXCLUDED.description,
+            image_url = EXCLUDED.image_url,
+            author = EXCLUDED.author,
+            download_url = EXCLUDED.download_url,
+            updated_at = NOW()
+        `;
+      } else {
+        await sql`
+          INSERT INTO marketplace_plugins (slug, name, description, image_url, version, author, download_url, updated_at)
+          VALUES (${slug}, ${name}, ${description || ''}, ${imageUrl}, ${version}, ${authorStr}, ${downloadUrl}, NOW())
+          ON CONFLICT (slug) DO UPDATE SET
+            version = EXCLUDED.version,
+            description = EXCLUDED.description,
+            image_url = EXCLUDED.image_url,
+            author = EXCLUDED.author,
+            download_url = EXCLUDED.download_url,
+            updated_at = NOW()
+        `;
+      }
     }
 
     return NextResponse.json({ 
+ 
       success: true, 
       name, 
       version 
