@@ -9,7 +9,8 @@ export default function Navbar() {
   const pathname = usePathname();
 
   return (
-    <nav className="flex items-center justify-between px-8 py-6 max-w-6xl mx-auto w-full border-b border-white/[0.08]">
+    <header className="sticky top-0 z-50 bg-black/80 backdrop-blur-md border-b border-white/[0.08]">
+      <nav className="flex items-center justify-between px-8 py-6 max-w-6xl mx-auto w-full">
       <div className="flex items-center gap-3">
         <Link href="/" className="flex items-center gap-3 hover:opacity-80 transition-opacity">
           <div className="w-8 h-8 rounded-full bg-white flex items-center justify-center">
@@ -51,5 +52,6 @@ export default function Navbar() {
         )}
       </div>
     </nav>
+    </header>
   );
 }
