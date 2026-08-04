@@ -58,8 +58,17 @@ export default async function PluginsPage() {
         const parsed = JSON.parse(rawJson);
         pluginInfo = { ...pluginInfo, ...parsed, slug: folderName };
       }
+      
+      const packageJsonPath = path.join(pluginsDir, folderName, 'package.json');
+      if (fs.existsSync(packageJsonPath)) {
+        const pkgRaw = fs.readFileSync(packageJsonPath, 'utf-8');
+        const pkgParsed = JSON.parse(pkgRaw);
+        if (pkgParsed.version) {
+          pluginInfo.version = pkgParsed.version;
+        }
+      }
     } catch (e) {
-      console.warn(`Could not parse plugin.json for ${folderName}`);
+      console.warn(`Could not parse plugin files for ${folderName}`);
     }
 
     return pluginInfo;

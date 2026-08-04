@@ -46,8 +46,17 @@ export default async function ThemesPage() {
         const parsed = JSON.parse(rawJson);
         themeInfo = { ...themeInfo, ...parsed, slug: folderName };
       }
+      
+      const packageJsonPath = path.join(themesDir, folderName, 'package.json');
+      if (fs.existsSync(packageJsonPath)) {
+        const pkgRaw = fs.readFileSync(packageJsonPath, 'utf-8');
+        const pkgParsed = JSON.parse(pkgRaw);
+        if (pkgParsed.version) {
+          themeInfo.version = pkgParsed.version;
+        }
+      }
     } catch (e) {
-      console.warn(`Could not parse theme.json for ${folderName}`);
+      console.warn(`Could not parse theme files for ${folderName}`);
     }
 
     return themeInfo;
