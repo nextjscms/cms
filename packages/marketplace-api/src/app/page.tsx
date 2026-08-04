@@ -1,6 +1,11 @@
+import { neon } from '@neondatabase/serverless';
+
 export default async function Home() {
   let stars = 0;
   let latestRelease = 'v0.1.0'; // Fallback
+  
+  let themes: any[] = [];
+  let plugins: any[] = [];
 
   try {
     // Fetch stars and latest release in parallel
@@ -24,10 +29,20 @@ export default async function Home() {
     // gracefully degrade if fetch fails
   }
 
+  try {
+    if (process.env.DATABASE_URL) {
+      const sql = neon(process.env.DATABASE_URL);
+      themes = await sql`SELECT * FROM marketplace_themes ORDER BY updated_at DESC LIMIT 6`;
+      plugins = await sql`SELECT * FROM marketplace_plugins ORDER BY updated_at DESC LIMIT 6`;
+    }
+  } catch(e) {
+    console.error('Failed to fetch from db:', e);
+  }
+
   return (
     <div className="flex flex-col flex-1 font-sans text-white selection:bg-white/30 selection:text-white">
       {/* Hero Section */}
-      <main className="flex-1 flex flex-col items-center justify-center px-6 relative overflow-hidden">
+      <main className="flex-1 flex flex-col items-center justify-center px-6 relative overflow-hidden py-32">
         
         {/* Subtle background grid pattern */}
         <div className="absolute inset-0 bg-[linear-gradient(to_right,#80808012_1px,transparent_1px),linear-gradient(to_bottom,#80808012_1px,transparent_1px)] bg-[size:24px_24px]"></div>
@@ -35,7 +50,7 @@ export default async function Home() {
         {/* Faded radial gradient to focus center */}
         <div className="absolute inset-0 bg-black [mask-image:radial-gradient(ellipse_at_center,transparent_20%,black_70%)]"></div>
 
-        <div className="max-w-4xl w-full text-center z-10 space-y-8 mt-12 mb-32 relative">
+        <div className="max-w-4xl w-full text-center z-10 space-y-8 relative">
           
           <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full border border-emerald-500/30 bg-emerald-500/10 text-sm font-medium text-emerald-300 mb-6 hover:bg-emerald-500/20 transition-colors cursor-pointer shadow-[0_0_15px_rgba(16,185,129,0.1)]">
             <span className="flex h-2 w-2 rounded-full bg-emerald-400 animate-pulse" />
@@ -76,23 +91,107 @@ export default async function Home() {
               {stars > 0 && <span className="ml-2 bg-gray-800 text-gray-300 text-xs px-2.5 py-0.5 rounded-full font-semibold border border-gray-700">{stars.toLocaleString()}</span>}
             </a>
           </div>
-          
-          <div className="pt-16 flex flex-wrap items-center justify-center gap-x-12 gap-y-6 text-[15px] text-gray-500 font-medium">
-            <span className="flex items-center gap-2 hover:text-gray-300 transition-colors cursor-default">
-              ~ Theme Marketplace
-            </span>
-            <span className="flex items-center gap-2 hover:text-gray-300 transition-colors cursor-default">
-              ~ AI Content Gen
-            </span>
-            <span className="flex items-center gap-2 hover:text-gray-300 transition-colors cursor-default">
-              ~ GitOps Built-in
-            </span>
-            <span className="flex items-center gap-2 hover:text-gray-300 transition-colors cursor-default">
-              ~ Edge Runtime
-            </span>
-          </div>
         </div>
       </main>
+
+      {/* Showcase Section */}
+      <section id="showcase" className="max-w-6xl mx-auto w-full px-6 py-24 z-10 border-t border-white/[0.08]">
+        <div className="text-center mb-16">
+          <h2 className="text-4xl font-bold tracking-tight mb-4">Marketplace Showcase</h2>
+          <p className="text-gray-400 text-lg">Browse themes and plugins created by the open-source community.</p>
+        </div>
+
+        <div className="space-y-24">
+          {/* Themes */}
+          <div>
+            <div className="flex items-center justify-between mb-8">
+              <h3 className="text-2xl font-bold flex items-center gap-3">
+                <svg className="w-6 h-6 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zm0 0h12a2 2 0 002-2v-4a2 2 0 00-2-2h-2.343M11 7.343l1.657-1.657a2 2 0 012.828 0l2.829 2.829a2 2 0 010 2.828l-8.486 8.485M7 17h.01" />
+                </svg>
+                Popular Themes
+              </h3>
+            </div>
+            {themes.length === 0 ? (
+              <div className="text-center py-12 border border-dashed border-white/[0.1] rounded-xl text-gray-500">
+                No themes published yet. Be the first!
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {themes.map((theme) => (
+                  <div key={theme.slug} className="group rounded-xl border border-white/[0.08] bg-white/[0.02] hover:bg-white/[0.04] transition-all overflow-hidden flex flex-col">
+                    <div className="aspect-video bg-black/50 border-b border-white/[0.08] relative">
+                      {theme.image_url ? (
+                        <img src={theme.image_url} alt={theme.name} className="w-full h-full object-cover" />
+                      ) : (
+                        <div className="w-full h-full flex items-center justify-center text-gray-700">No preview</div>
+                      )}
+                      <div className="absolute top-3 right-3 bg-black/80 backdrop-blur-sm text-xs font-mono px-2 py-1 rounded-md border border-white/10">
+                        v{theme.version}
+                      </div>
+                    </div>
+                    <div className="p-5 flex-1 flex flex-col">
+                      <h4 className="text-lg font-bold mb-1">{theme.name}</h4>
+                      <p className="text-sm text-gray-400 mb-4 line-clamp-2 flex-1">{theme.description}</p>
+                      
+                      <div className="flex items-center justify-between mt-auto pt-4 border-t border-white/[0.08]">
+                        <div className="flex items-center gap-2">
+                          <img src={`https://github.com/${theme.author}.png`} alt={theme.author} className="w-6 h-6 rounded-full" />
+                          <span className="text-sm text-gray-300">@{theme.author}</span>
+                        </div>
+                        <div className="text-xs font-mono bg-white/[0.05] px-2 py-1 rounded text-gray-400 cursor-copy hover:text-white transition-colors title='Copy install ID'">
+                          {theme.slug}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* Plugins */}
+          <div>
+            <div className="flex items-center justify-between mb-8">
+              <h3 className="text-2xl font-bold flex items-center gap-3">
+                <svg className="w-6 h-6 text-blue-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4" />
+                </svg>
+                Popular Plugins
+              </h3>
+            </div>
+            {plugins.length === 0 ? (
+              <div className="text-center py-12 border border-dashed border-white/[0.1] rounded-xl text-gray-500">
+                No plugins published yet. Be the first!
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {plugins.map((plugin) => (
+                  <div key={plugin.slug} className="group rounded-xl border border-white/[0.08] bg-white/[0.02] hover:bg-white/[0.04] transition-all overflow-hidden flex flex-col">
+                    <div className="p-5 flex-1 flex flex-col">
+                      <div className="flex justify-between items-start mb-2">
+                        <h4 className="text-lg font-bold">{plugin.name}</h4>
+                        <span className="text-xs font-mono bg-black/50 px-2 py-1 rounded-md border border-white/10">v{plugin.version}</span>
+                      </div>
+                      <p className="text-sm text-gray-400 mb-6 line-clamp-3 flex-1">{plugin.description}</p>
+                      
+                      <div className="flex items-center justify-between mt-auto pt-4 border-t border-white/[0.08]">
+                        <div className="flex items-center gap-2">
+                          <img src={`https://github.com/${plugin.author}.png`} alt={plugin.author} className="w-6 h-6 rounded-full" />
+                          <span className="text-sm text-gray-300">@{plugin.author}</span>
+                        </div>
+                        <div className="text-xs font-mono bg-white/[0.05] px-2 py-1 rounded text-gray-400 cursor-copy hover:text-white transition-colors title='Copy install ID'">
+                          {plugin.slug}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+      </section>
 
       {/* Footer */}
       <footer className="py-8 text-center text-[13px] text-gray-500 border-t border-white/[0.08]">

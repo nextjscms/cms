@@ -19,8 +19,8 @@ export default function Navbar() {
         </Link>
       </div>
       <div className="flex gap-8 text-sm font-medium text-gray-400 items-center">
-        <Link href="#" className="hover:text-white transition-colors">Showcase</Link>
-        <Link href="#" className="hover:text-white transition-colors">Docs</Link>
+        <Link href="/#showcase" className="hover:text-white transition-colors">Showcase</Link>
+        <Link href="/docs" className="hover:text-white transition-colors">Docs</Link>
         <Link href="/developer" className="hover:text-white transition-colors text-white font-bold">Developer</Link>
         
         {/* Always visible GitHub link */}
