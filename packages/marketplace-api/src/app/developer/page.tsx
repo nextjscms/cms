@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { useAuth } from '../../context/AuthContext';
 
 export default function DeveloperPage() {
-  const { user, login, isCheckingAuth, token } = useAuth();
+  const { user, login, isCheckingAuth, token, isLoggingIn } = useAuth();
   
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState('');
