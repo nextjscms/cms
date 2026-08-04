@@ -93,7 +93,7 @@ export default async function SettingsLayout({
         </div>
       </aside>
 
-      <main className="flex-1">
+      <main className="flex-1 w-full max-w-4xl mx-auto">
         {children}
       </main>
     </div>
