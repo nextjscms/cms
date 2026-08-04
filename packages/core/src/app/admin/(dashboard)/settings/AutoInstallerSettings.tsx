@@ -6,7 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
 import { Loader2, GitBranch, CheckCircle2 } from 'lucide-react';
-import { saveGitOpsToken } from '@/app/admin/setup/setup-actions';
+import { saveGitOpsToken, checkAppInstallation } from '@/app/admin/setup/setup-actions';
 import { useSearchParams } from 'next/navigation';
 
 export default function AutoInstallerSettings({ initialOwner, initialRepo, initialRootDir, hasToken }: { initialOwner: string, initialRepo: string, initialRootDir: string, hasToken: boolean }) {
@@ -18,6 +18,15 @@ export default function AutoInstallerSettings({ initialOwner, initialRepo, initi
   const [githubOwner, setGithubOwner] = useState(initialOwner);
   const [githubRepo, setGithubRepo] = useState(initialRepo);
   const [rootDir, setRootDir] = useState(initialRootDir);
+  const [appInstalled, setAppInstalled] = useState<boolean | null>(null);
+
+  useEffect(() => {
+    if (hasToken && githubOwner && githubRepo) {
+      checkAppInstallation(githubOwner, githubRepo).then(res => {
+        setAppInstalled(res.installed);
+      });
+    }
+  }, [hasToken, githubOwner, githubRepo]);
 
   useEffect(() => {
     const token = searchParams.get('github_token');
@@ -76,22 +85,36 @@ export default function AutoInstallerSettings({ initialOwner, initialRepo, initi
         {success && <div className="text-green-500 text-sm">{success}</div>}
         
         {githubOwner && githubRepo ? (
-          <div className="bg-slate-50 border border-slate-200 rounded-lg p-4 flex items-center justify-between">
-            <div className="space-y-1">
-              <p className="text-sm font-medium text-slate-900">Linked Repository</p>
-              <a 
-                href={`https://github.com/${githubOwner}/${githubRepo}`} 
-                target="_blank" 
-                rel="noreferrer"
-                className="text-sm text-blue-600 hover:underline flex items-center gap-1"
-              >
-                github.com/{githubOwner}/{githubRepo}
-              </a>
+          <div className="bg-slate-50 border border-slate-200 rounded-lg p-4 flex flex-col gap-4">
+            <div className="flex items-center justify-between">
+              <div className="space-y-1">
+                <p className="text-sm font-medium text-slate-900">Linked Repository</p>
+                <a 
+                  href={`https://github.com/${githubOwner}/${githubRepo}`} 
+                  target="_blank" 
+                  rel="noreferrer"
+                  className="text-sm text-blue-600 hover:underline flex items-center gap-1"
+                >
+                  github.com/{githubOwner}/{githubRepo}
+                </a>
+              </div>
+              {hasToken && (
+                <span className="inline-flex items-center rounded-full bg-green-50 px-2 py-1 text-xs font-medium text-green-700 ring-1 ring-inset ring-green-600/20">
+                  Active
+                </span>
+              )}
             </div>
-            {hasToken && (
-              <span className="inline-flex items-center rounded-full bg-green-50 px-2 py-1 text-xs font-medium text-green-700 ring-1 ring-inset ring-green-600/20">
-                Active
-              </span>
+            
+            {hasToken && appInstalled === false && (
+               <div className="bg-amber-50 border border-amber-200 rounded-md p-3 text-sm text-amber-800">
+                  ⚠️ Auto-Pilot is not installed on this repository. <a href="https://github.com/apps/nextjscms-auto-pilot/installations/new" target="_blank" rel="noreferrer" className="underline font-medium hover:text-amber-900">Install it now</a> to enable automatic updates.
+               </div>
+            )}
+            {hasToken && appInstalled === true && (
+               <div className="bg-emerald-50 border border-emerald-200 rounded-md p-3 text-sm text-emerald-800 flex items-center gap-2 font-medium">
+                  <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+                  Auto-Pilot is correctly installed on this repository!
+               </div>
             )}
           </div>
         ) : (
