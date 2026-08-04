@@ -1,0 +1,17 @@
+{
+  "git": {
+    "commitMessage": "chore: release v${version}",
+    "requireBranch": "master",
+    "requireCleanWorkingDir": false
+  },
+  "github": {
+    "release": true,
+    "web": true
+  },
+  "npm": {
+    "publish": false
+  },
+  "hooks": {
+    "after:bump": "npm version ${version} --workspace=packages/core --no-git-tag-version"
+  }
+}

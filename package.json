@@ -1,10 +1,17 @@
 {
   "name": "nextjscms-monorepo",
+  "version": "0.5.3",
   "private": true,
+  "scripts": {
+    "release": "release-it"
+  },
   "workspaces": [
     "packages/*"
   ],
   "engines": {
     "node": ">=18"
+  },
+  "devDependencies": {
+    "release-it": "^21.0.1"
   }
 }
