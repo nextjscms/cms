@@ -1,12 +1,24 @@
 export default async function Home() {
   let stars = 0;
+  let latestRelease = 'v0.1.0'; // Fallback
+
   try {
-    const res = await fetch('https://api.github.com/repos/nextjscms/cms', { 
-      next: { revalidate: 3600 } 
-    });
-    if (res.ok) {
-      const data = await res.json();
+    // Fetch stars and latest release in parallel
+    const [repoRes, releaseRes] = await Promise.all([
+      fetch('https://api.github.com/repos/nextjscms/cms', { next: { revalidate: 3600 } }),
+      fetch('https://api.github.com/repos/nextjscms/cms/releases/latest', { next: { revalidate: 3600 } })
+    ]);
+
+    if (repoRes.ok) {
+      const data = await repoRes.json();
       stars = data.stargazers_count || 0;
+    }
+
+    if (releaseRes.ok) {
+      const releaseData = await releaseRes.json();
+      if (releaseData.tag_name) {
+        latestRelease = releaseData.tag_name;
+      }
     }
   } catch (e) {
     // gracefully degrade if fetch fails
@@ -27,7 +39,7 @@ export default async function Home() {
           
           <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full border border-emerald-500/30 bg-emerald-500/10 text-sm font-medium text-emerald-300 mb-6 hover:bg-emerald-500/20 transition-colors cursor-pointer shadow-[0_0_15px_rgba(16,185,129,0.1)]">
             <span className="flex h-2 w-2 rounded-full bg-emerald-400 animate-pulse" />
-            NextjsCMS v0.1.0 is now available
+            NextjsCMS {latestRelease} is now available
           </div>
           
           <h1 className="text-6xl md:text-8xl font-extrabold tracking-tighter leading-[1.05]">
