@@ -90,7 +90,7 @@ export async function checkAppInstallation(owner: string, repo: string) {
     const token = settingsData.githubToken;
     if (!token) return { installed: false, error: 'No GitHub token found' };
 
-    const url = `https://api.github.com/repos/${owner}/${repo}/installation`;
+    const url = `https://api.github.com/user/installations`;
     const response = await fetch(url, {
       headers: {
         'Authorization': `Bearer ${token}`,
@@ -101,12 +101,41 @@ export async function checkAppInstallation(owner: string, repo: string) {
       cache: 'no-store'
     });
     
-    if (response.status === 200) {
-      return { installed: true };
-    } else if (response.status === 404) {
-      return { installed: false };
+    if (response.status !== 200) {
+      return { installed: false, error: `GitHub API returned ${response.status}` };
     }
-    return { installed: false, error: `GitHub API returned ${response.status}` };
+    
+    const data = await response.json();
+    const installations = data.installations || [];
+    
+    for (const inst of installations) {
+      if (inst.account && inst.account.login.toLowerCase() === owner.toLowerCase()) {
+        if (inst.repository_selection === 'all') {
+          return { installed: true };
+        } else {
+          // Check specific repositories for this installation
+          const reposUrl = `https://api.github.com/user/installations/${inst.id}/repositories`;
+          const reposResponse = await fetch(reposUrl, {
+            headers: {
+              'Authorization': `Bearer ${token}`,
+              'Accept': 'application/vnd.github.v3+json',
+              'X-GitHub-Api-Version': '2022-11-28',
+              'User-Agent': 'NextjsCMS-GitOps',
+            },
+            cache: 'no-store'
+          });
+          if (reposResponse.status === 200) {
+            const reposData = await reposResponse.json();
+            const repos = reposData.repositories || [];
+            if (repos.some((r: any) => r.name.toLowerCase() === repo.toLowerCase())) {
+              return { installed: true };
+            }
+          }
+        }
+      }
+    }
+    
+    return { installed: false };
   } catch (error: any) {
     return { installed: false, error: String(error) };
   }
