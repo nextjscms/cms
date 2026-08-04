@@ -81,7 +81,7 @@ export async function installTheme(slug: string, downloadUrl: string, version?: 
     const rootDirPrefix = rootDirStr ? `${rootDirStr}/` : '';
     const targetPrefix = `${rootDirPrefix}src/themes/${slug}`;
     
-    await extractTarballToMemoryAndCommit(finalResponse.body, targetPrefix, `Install NextjsCMS Theme: ${slug} [skip ci]`, gitOpsSettings);
+    await extractTarballToMemoryAndCommit(finalResponse.body, targetPrefix, `Install NextjsCMS Theme: ${slug} [skip vercel]`, gitOpsSettings);
     await addPendingDeployment(`Installed Theme: ${slug}`);
     revalidatePath('/admin/themes');
     return { success: true };
@@ -157,7 +157,7 @@ ${activePlugins.map((s, i) => `  '${s}': plugin${i},`).join('\n')}
       path: 'src/plugins/registry.ts',
       content: Buffer.from(registryContent, 'utf-8')
     }];
-    await createGithubCommit(files, `Toggle NextjsCMS Plugin: ${slug} (${activate ? 'Activate' : 'Deactivate'}) [skip ci]`, gitOpsSettings);
+    await createGithubCommit(files, `Toggle NextjsCMS Plugin: ${slug} (${activate ? 'Activate' : 'Deactivate'}) [skip vercel]`, gitOpsSettings);
     await addPendingDeployment(`${activate ? 'Activated' : 'Deactivated'} Plugin: ${slug}`);
     revalidatePath('/admin/plugins');
     return;
@@ -187,7 +187,7 @@ export async function installPlugin(slug: string, downloadUrl: string, version?:
   const gitOpsSettings = await getGitOpsSettings();
   if (gitOpsSettings && gitOpsSettings.githubToken) {
     console.log('GitOps enabled, pushing plugin to GitHub');
-    await extractTarballToMemoryAndCommit(finalResponse.body, `src/plugins/${slug}`, `Install NextjsCMS Plugin: ${slug} [skip ci]`, gitOpsSettings);
+    await extractTarballToMemoryAndCommit(finalResponse.body, `src/plugins/${slug}`, `Install NextjsCMS Plugin: ${slug} [skip vercel]`, gitOpsSettings);
     await addPendingDeployment(`Installed Plugin: ${slug}`);
     revalidatePath('/admin/plugins');
     return { success: true };
@@ -318,7 +318,7 @@ export async function updateCore(downloadUrl: string, version: string) {
     await extractTarballToMemoryAndCommit(
       finalResponse.body, 
       '', // targetPrefix is empty so it doesn't double-nest the extracted paths
-      `Update NextjsCMS Core to v${version} [skip ci]`, 
+      `Update NextjsCMS Core to v${version} [skip vercel]`, 
       gitOpsSettings,
       excludeFilter
     );
