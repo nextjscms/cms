@@ -1,14 +1,30 @@
 'use client';
 
-import { useState, useTransition } from 'react';
+import { useState, useTransition, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
-import { Rocket, Loader2, List, Info } from 'lucide-react';
+import { Rocket, Loader2, List, Info, CheckCircle2, XCircle } from 'lucide-react';
 import { toast } from 'sonner';
-import { triggerVercelBuild } from '@/app/admin/actions';
+import { triggerVercelBuild, getLatestDeploymentStatus } from '@/app/admin/actions';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 
 export function DeployButton({ gitOpsEnabled, pendingDeployments = [] }: { gitOpsEnabled: boolean; pendingDeployments?: { message: string; timestamp: string }[] }) {
   const [isPending, startTransition] = useTransition();
+  const [deployStatus, setDeployStatus] = useState<any>(null);
+
+  useEffect(() => {
+    if (!gitOpsEnabled) return;
+    
+    const checkStatus = async () => {
+      try {
+        const status = await getLatestDeploymentStatus();
+        setDeployStatus(status);
+      } catch (e) {}
+    };
+
+    checkStatus();
+    const interval = setInterval(checkStatus, 10000);
+    return () => clearInterval(interval);
+  }, [gitOpsEnabled]);
 
   if (!gitOpsEnabled) {
     return null;
@@ -19,6 +35,10 @@ export function DeployButton({ gitOpsEnabled, pendingDeployments = [] }: { gitOp
       try {
         await triggerVercelBuild();
         toast.success('Deployment triggered successfully! Vercel is now building your site.');
+        setTimeout(async () => {
+          const status = await getLatestDeploymentStatus();
+          if (status) setDeployStatus(status);
+        }, 2000);
       } catch (err: any) {
         toast.error(`Failed to trigger deployment: ${err.message}`);
       }
@@ -26,6 +46,7 @@ export function DeployButton({ gitOpsEnabled, pendingDeployments = [] }: { gitOp
   };
 
   const hasPending = pendingDeployments.length > 0;
+  const isBuilding = deployStatus?.state === 'in_progress' || deployStatus?.state === 'queued' || deployStatus?.state === 'pending';
 
   return (
     <div className="flex items-center gap-2">
@@ -55,13 +76,13 @@ export function DeployButton({ gitOpsEnabled, pendingDeployments = [] }: { gitOp
 
       <Button 
         onClick={handleDeploy} 
-        disabled={isPending}
+        disabled={isPending || isBuilding}
         variant="outline"
         size="sm"
-        className={`gap-2 ${hasPending ? 'border-amber-400 text-amber-700 hover:bg-amber-50 bg-amber-50' : 'border-blue-200 text-blue-700 hover:bg-blue-50'}`}
+        className={`gap-2 ${isBuilding ? 'border-indigo-400 text-indigo-700 hover:bg-indigo-50 bg-indigo-50' : hasPending ? 'border-amber-400 text-amber-700 hover:bg-amber-50 bg-amber-50' : 'border-blue-200 text-blue-700 hover:bg-blue-50'}`}
       >
-        {isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Rocket className="w-4 h-4" />}
-        Publish {hasPending ? `(${pendingDeployments.length})` : 'Changes'}
+        {isPending || isBuilding ? <Loader2 className="w-4 h-4 animate-spin" /> : <Rocket className="w-4 h-4" />}
+        {isBuilding ? 'Vercel Building...' : 'Publish ' + (hasPending ? `(${pendingDeployments.length})` : 'Changes')}
       </Button>
     </div>
   );

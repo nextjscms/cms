@@ -9,8 +9,60 @@ import path from 'path';
 import * as tar from 'tar';
 import { Readable } from 'stream';
 import { auth } from '@/auth';
-import { getGitOpsSettings, extractTarballToMemoryAndCommit, createGithubCommit } from '@/lib/gitops';
+import { getGitOpsSettings as getGitOpsSettingsLib, extractTarballToMemoryAndCommit, createGithubCommit } from '@/lib/gitops';
 import { nextjscms } from '@/lib/hooks';
+
+export async function getGitOpsSettings() {
+  return await getGitOpsSettingsLib();
+}
+
+export async function getLatestDeploymentStatus() {
+  const gitOpsSettings = await getGitOpsSettingsLib();
+  if (!gitOpsSettings || !gitOpsSettings.githubToken) return null;
+
+  try {
+    const owner = gitOpsSettings.githubOwner;
+    const repo = gitOpsSettings.githubRepo;
+    const token = gitOpsSettings.githubToken;
+    const branch = gitOpsSettings.branch || 'main'; // default to main if not set in older installs
+
+    const deploymentsRes = await fetch(`https://api.github.com/repos/${owner}/${repo}/deployments?per_page=1`, {
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Accept': 'application/vnd.github.v3+json',
+        'X-GitHub-Api-Version': '2022-11-28',
+      },
+      next: { revalidate: 0 }
+    });
+    if (!deploymentsRes.ok) return null;
+    const deployments = await deploymentsRes.json();
+    if (!deployments || deployments.length === 0) return null;
+
+    const latestDeployment = deployments[0];
+
+    const statusesRes = await fetch(`https://api.github.com/repos/${owner}/${repo}/deployments/${latestDeployment.id}/statuses?per_page=1`, {
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Accept': 'application/vnd.github.v3+json',
+        'X-GitHub-Api-Version': '2022-11-28',
+      },
+      next: { revalidate: 0 }
+    });
+    if (!statusesRes.ok) return null;
+    const statuses = await statusesRes.json();
+    if (!statuses || statuses.length === 0) return null;
+
+    return {
+      state: statuses[0].state, // 'queued', 'in_progress', 'success', 'error', 'failure'
+      description: statuses[0].description,
+      log_url: statuses[0].log_url,
+      created_at: statuses[0].created_at
+    };
+  } catch (error) {
+    console.error('Failed to get deployment status', error);
+    return null;
+  }
+}
 
 export async function getPendingDeployments(): Promise<{ message: string; timestamp: string }[]> {
   const db = getDb();
