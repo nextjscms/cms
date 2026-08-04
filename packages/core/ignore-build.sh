@@ -10,14 +10,18 @@ if [[ "$VERCEL_GIT_COMMIT_MESSAGE" == *"[skip vercel]"* ]]; then
   exit 0
 fi
 
-# 2. Try to diff against the previous commit. 
-# If HEAD^ doesn't exist (e.g., new deployment), git diff returns an error code.
-# If there are changes, it returns 1. 
-# We want to cancel the build (exit 0) ONLY if it successfully proves there are no changes.
-if git diff HEAD^ HEAD --quiet . 2>/dev/null; then
-  echo "Build cancelled: no changes detected in packages/core."
-  exit 0
+# 2. Use Vercel's provided environment variables to check for changes securely
+if [[ -n "$VERCEL_GIT_PREVIOUS_SHA" && -n "$VERCEL_GIT_COMMIT_SHA" ]]; then
+  # Compare the previous commit to the new one for this specific directory
+  if git diff --quiet "$VERCEL_GIT_PREVIOUS_SHA" "$VERCEL_GIT_COMMIT_SHA" . 2>/dev/null; then
+    echo "Build cancelled: no changes detected in packages/core."
+    exit 0
+  else
+    echo "Build proceeding: changes detected in packages/core."
+    exit 1
+  fi
 else
-  echo "Build proceeding: changes detected or unable to compare (e.g., new deployment)."
+  # Fallback for manual deployments, first deployments, or missing variables
+  echo "Build proceeding: unable to compare commits securely."
   exit 1
 fi
