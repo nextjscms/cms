@@ -165,7 +165,7 @@ export default async function MarketplacePage({
                     <div className="flex items-start justify-between gap-4">
                       <div>
                         <h3 className="text-base font-medium text-blue-400 group-hover:text-blue-300 transition-colors">
-                          <Link href={`#`} className="hover:underline">{item.name}</Link>
+                          <Link href={`/marketplace/${item.type}/${item.slug}`} className="hover:underline">{item.name}</Link>
                         </h3>
                         <div className="flex items-center gap-2 mt-1 text-xs text-gray-400">
                           <span>{item.author}</span>
