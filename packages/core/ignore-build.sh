@@ -10,8 +10,14 @@ if [[ "$VERCEL_GIT_COMMIT_MESSAGE" == *"[skip vercel]"* ]]; then
   exit 0
 fi
 
-# 2. Only build if files in this workspace (packages/core) changed
-git diff HEAD^ HEAD --quiet .
-
-# git diff --quiet returns 1 if there ARE changes (build proceeds)
-# git diff --quiet returns 0 if there are NO changes (build cancelled)
+# 2. Try to diff against the previous commit. 
+# If HEAD^ doesn't exist (e.g., new deployment), git diff returns an error code.
+# If there are changes, it returns 1. 
+# We want to cancel the build (exit 0) ONLY if it successfully proves there are no changes.
+if git diff HEAD^ HEAD --quiet . 2>/dev/null; then
+  echo "Build cancelled: no changes detected in packages/core."
+  exit 0
+else
+  echo "Build proceeding: changes detected or unable to compare (e.g., new deployment)."
+  exit 1
+fi
